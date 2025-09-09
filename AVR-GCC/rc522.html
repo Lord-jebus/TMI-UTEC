@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVR-GCC con RFID RC522 - Programación en Arduino</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-5px);
+        }
+        
+        .presentation-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .presentation-content {
+            padding: 20px;
+            min-height: 320px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .presentation-footer {
+            background: #f5f5f5;
+            padding: 15px;
+            text-align: center;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AVR-GCC con Módulo RFID RC522</h1>
+            <p class="subtitle">Programación en Arduino usando AVR-GCC y registros</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción a AVR-GCC</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es AVR-GCC?</h3>
+                    <ul>
+                        <li>Compilador de GNU para microcontroladores AVR</li>
+                        <li>Permite programar en C/C++ para Arduino sin el IDE</li>
+                        <li>Mayor control sobre el hardware y registros</li>
+                        <li>Programas más eficientes y de menor tamaño</li>
+                    </ul>
+                    
+                    <h3>Ventajas para RFID</h3>
+                    <ul>
+                        <li>Control directo de los protocolos SPI</li>
+                        <li>Manejo eficiente de interrupciones</li>
+                        <li>Optimización de la comunicación con el RC522</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Compilación: avr-gcc -mmcu=atmega328p -Os programa.c -o programa.elf
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Configuración de Pines</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Configuración de registros</h3>
+                    <p>En AVR-GCC, configuramos los pines directamente mediante registros:</p>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Configurar pin SS (Slave Select) como salida</span><br>
+                        <span class="keyword">#define</span> SS_PIN PB2<br>
+                        <span class="keyword">#define</span> DDR_SPI DDRB<br>
+                        <span class="keyword">#define</span> PORT_SPI PORTB<br><br>
+                        
+                        <span class="comment">// Inicializar pines SPI</span><br>
+                        <span class="keyword">void</span> <span class="function">spi_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar MOSI, SCK y SS como salidas</span><br>
+                        &nbsp;&nbsp;DDR_SPI |= (1 &lt;&lt; PB3) | (1 &lt;&lt; PB5) | (1 &lt;&lt; SS_PIN);<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar MISO como entrada</span><br>
+                        &nbsp;&nbsp;DDR_SPI &amp;= ~(1 &lt;&lt; PB4);<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    DDRx: Data Direction Register, PORTx: Puerto de salida
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Comunicación SPI</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Implementación de SPI con AVR-GCC</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Función para transferir datos via SPI</span><br>
+                        <span class="keyword">uint8_t</span> <span class="function">spi_transfer</span>(<span class="keyword">uint8_t</span> data) {<br>
+                        &nbsp;&nbsp;<span class="comment">// Esperar hasta que el buffer de transmisión esté vacío</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (!(SPSR &amp; (1 &lt;&lt; SPIF)));<br>
+                        &nbsp;&nbsp;<span class="comment">// Escribir el dato en el registro</span><br>
+                        &nbsp;&nbsp;SPDR = data;<br>
+                        &nbsp;&nbsp;<span class="comment">// Esperar a que se complete la transferencia</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (!(SPSR &amp; (1 &lt;&lt; SPIF)));<br>
+                        &nbsp;&nbsp;<span class="comment">// Devolver el dato recibido</span><br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> SPDR;<br>
+                        }
+                    </div>
+                    
+                    <p>El registro <span class="highlight">SPDR</span> (SPI Data Register) se utiliza para enviar y recibir datos.</p>
+                </div>
+                <div class="presentation-footer">
+                    SPSR: SPI Status Register, SPDR: SPI Data Register
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Inicialización del RC522</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Función de inicialización</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Inicializar el módulo RC522</span><br>
+                        <span class="keyword">void</span> <span class="function">rc522_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar el pin RST</span><br>
+                        &nbsp;&nbsp;DDR_RC522 |= (1 &lt;&lt; RST_PIN);<br>
+                        &nbsp;&nbsp;PORT_RC522 &amp;= ~(1 &lt;&lt; RST_PIN);<br>
+                        &nbsp;&nbsp;_delay_ms(1);<br>
+                        &nbsp;&nbsp;PORT_RC522 |= (1 &lt;&lt; RST_PIN);<br>
+                        &nbsp;&nbsp;_delay_ms(50);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Inicializar comunicación SPI</span><br>
+                        &nbsp;&nbsp;spi_init();<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Realizar soft reset</span><br>
+                        &nbsp;&nbsp;rc522_write(CommandReg, SoftReset_CMD);<br>
+                        &nbsp;&nbsp;_delay_ms(50);<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Se utiliza reset por hardware y software para inicializar correctamente
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Lectura de Tarjetas RFID</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Función de autenticación y lectura</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Leer bloque de datos de la tarjeta</span><br>
+                        <span class="keyword">int8_t</span> <span class="function">rc522_read_card</span>(<span class="keyword">uint8_t</span> blockAddr, <span class="keyword">uint8_t</span>* data) {<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> buffer[18];<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> size = sizeof(buffer);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Autenticar bloque</span><br>
+                        &nbsp;&nbsp;<span class="keyword">if</span> (rc522_auth(AntiCollision, blockAddr)) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Leer bloque</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (rc522_read(blockAddr, buffer, &amp;size) == MI_OK) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memcpy(data, buffer, 16);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> MI_OK;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> MI_ERR;<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Se requiere autenticación antes de leer cualquier bloque de datos
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Optimizaciones con AVR-GCC</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Ventajas de programar con AVR-GCC</h3>
+                    <ul>
+                        <li>Código más compacto y eficiente</li>
+                        <li>Mayor control sobre los registros del microcontrolador</li>
+                        <li>Posibilidad de optimizar funciones críticas en ensamblador</li>
+                        <li>Uso de interrupciones para un mejor rendimiento</li>
+                    </ul>
+                    
+                    <h3>Comparación de tamaños</h3>
+                    <ul>
+                        <li>Sketch Arduino IDE: ~15-20KB</li>
+                        <li>Compilado con AVR-GCC: ~8-12KB</li>
+                        <li>Mejor manejo de memoria RAM</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    AVR-GCC permite flags de optimización como -Os para optimizar por tamaño
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>        
+    </div>
+</body>
+</html>

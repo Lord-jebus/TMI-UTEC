@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tecnologías de Microprocesamiento - ATmega328P</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --accent1: #e74c3c;
+            --accent2: #2ecc71;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .welcome-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .welcome-section h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--primary);
+        }
+        
+        .welcome-content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .welcome-text {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .welcome-text p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .atmega-image {
+            flex: 1;
+            min-width: 300px;
+            background: linear-gradient(45deg, #1a2a6c, #3498db);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .objectives-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .objectives-section h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--accent2);
+        }
+        
+        .objectives-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .objective-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid var(--primary);
+        }
+        
+        .objective-card h3 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .objective-card h3 i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+        
+        .tech-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .tech-section h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--accent1);
+            display: flex;
+            align-items: center;
+        }
+        
+        .tech-section h2 i {
+            margin-right: 10px;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .tech-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .tech-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .tech-card h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .tech-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .tech-link {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--dark);
+            transition: background 0.3s, transform 0.2s;
+            border: 1px solid #e9ecef;
+        }
+        
+        .tech-link:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .tech-link i {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .resources-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .resources-section h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--accent2);
+            display: flex;
+            align-items: center;
+        }
+        
+        .resources-section h2 i {
+            margin-right: 10px;
+        }
+        
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .resource-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .resource-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .resource-card h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+        
+        .resource-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .resource-link:hover {
+            background: var(--secondary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .welcome-content, .objectives-grid, .tech-grid, .resources-grid {
+                flex-direction: column;
+            }
+            
+            .tech-grid, .resources-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Tecnologías de Microprocesamiento</h1>
+            <p class="subtitle">Aprende sobre programación en ensamblador y C para el microcontrolador ATmega328P</p>
+        </header>
+        
+        <section class="welcome-section">
+            <h2>Bienvenido</h2>
+            <div class="welcome-content">
+                <div class="welcome-text">
+                    <p>El ATmega328P es un microcontrolador de 8 bits de la familia AVR de Microchip (anteriormente Atmel). Es ampliamente conocido por ser el cerebro del <b>Arduino Uno</b>, pero su utilidad va mucho más allá de esta plataforma.</p>
+                    <p>Este microcontrolador ofrece un conjunto de características poderosas que lo hacen ideal para una amplia gama de aplicaciones, desde proyectos de aficionados hasta productos comerciales.</p>
+                    <p>En esta página encontrarás recursos para aprender a programar el ATmega328P tanto en <b>ensamblador</b> como en <b>C</b>, aprovechando todas sus capacidades y periféricos.</p>
+                </div>
+                <div class="atmega-image">
+                    <div>
+                        <i class="fas fa-microchip fa-3x"></i>
+                        <p>ATmega328P</p>
+                        <p>8-bit AVR Microcontroller</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="objectives-section">
+            <h2>Objetivos de Aprendizaje</h2>
+            <div class="objectives-grid">
+                <div class="objective-card">
+                    <h3><i class="fas fa-brain"></i> Comprender la arquitectura</h3>
+                    <p>Conocer la estructura interna del ATmega328P, incluyendo sus buses, memorias y registros.</p>
+                </div>
+                <div class="objective-card">
+                    <h3><i class="fas fa-code"></i> Programar en ensamblador</h3>
+                    <p>Aprender a programar en lenguaje ensamblador para un control preciso del hardware.</p>
+                </div>
+                <div class="objective-card">
+                    <h3><i class="fas fa-cogs"></i> Dominar los periféricos</h3>
+                    <p>Utilizar todos los periféricos del microcontrolador: temporizadores, UART, ADC, etc.</p>
+                </div>
+                <div class="objective-card">
+                    <h3><i class="fas fa-plug"></i> Interfaz con componentes</h3>
+                    <p>Conectar y comunicarse con sensores, displays y otros componentes electrónicos.</p>
+                </div>
+                <div class="objective-card">
+                    <h3><i class="fas fa-lightbulb"></i> Desarrollar proyectos</h3>
+                    <p>Generar proyectos completos aplicando los conocimientos adquiridos.</p>
+                </div>
+                <div class="objective-card">
+                    <h3><i class="fas fa-bug"></i> Depurar y optimizar</h3>
+                    <p>Aprender técnicas de depuración y optimización de código para ambos lenguajes.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="tech-section">
+            <h2><i class="fas fa-microchip"></i> Tecnologías en Ensamblador</h2>
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <h3>Arquitectura Básica</h3>
+                    <div class="tech-links">
+                        <a href="./Assembler/buses.html" class="tech-link"><i class="fas fa-bus"></i> Buses del Sistema</a>
+                        <a href="./Assembler/buses.html" class="tech-link"><i class="fas fa-memory"></i> Memorias y Mapas de Memoria</a>
+                        <a href="./Assembler/buses.html" class="tech-link"><i class="fas fa-exchange-alt"></i> Registros de Propósito General</a>
+                    </div>
+                </div>
+                <div class="tech-card">
+                    <h3>Interrupciones</h3>
+                    <div class="tech-links">
+                        <a href="./Assembler/interrupciones.html" class="tech-link"><i class="fas fa-bell"></i> Vectores de Interrupción</a>
+                        <a href="./Assembler/interrupciones.html" class="tech-link"><i class="fas fa-toggle-on"></i> Habilitación de Interrupciones</a>
+                        <a href="./Assembler/interrupciones.html" class="tech-link"><i class="fas fa-code"></i> Rutinas de Servicio de Interrupción</a>
+                    </div>
+                </div>
+                <div class="tech-card">
+                    <h3>Stack Pointer</h3>
+                    <div class="tech-links">
+                        <a href="./Assembler/stack_pointer.html" class="tech-link"><i class="fas fa-layer-group"></i> Implementación del Stack</a>
+                        <a href="./Assembler/stack_pointer.html" class="tech-link"><i class="fas fa-sign-out-alt"></i> Llamadas a Subrutinas</a>
+                        <a href="./Assembler/stack_pointer.html" class="tech-link"><i class="fas fa-save"></i> Guardado de Contexto</a>
+                    </div>
+                </div>
+                <div class="tech-card">
+                    <h3>Temporizadores/Contadores</h3>
+                    <div class="tech-links">
+                        <a href="./Assembler/tyc.html" class="tech-link"><i class="fas fa-clock"></i> Timer0 - 8 bits</a>
+                        <a href="./Assembler/tyc.html" class="tech-link"><i class="fas fa-stopwatch"></i> Timer1 - 16 bits</a>
+                        <a href="./Assembler/tyc.html" class="tech-link"><i class="fas fa-hourglass-half"></i> Timer2 - 8 bits</a>
+                    </div>
+                </div>
+                <div class="tech-card">
+                    <h3>Comunicación UART</h3>
+                    <div class="tech-links">
+                        <a href="./Assembler/uart.html" class="tech-link"><i class="fas fa-satellite-dish"></i> Configuración de Baud Rate</a>
+                        <a href="./Assembler/uart.html" class="tech-link"><i class="fas fa-paper-plane"></i> Transmisión de Datos</a>
+                        <a href="./Assembler/uart.html" class="tech-link"><i class="fas fa-inbox"></i> Recepción de Datos</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="tech-section">
+            <h2><i class="fas fa-code"></i> Tecnologías en C</h2>
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <h3>Conversión Analógico-Digital</h3>
+                    <div class="tech-links">
+                        <a href="./AVR-GCC/adc.html" class="tech-link"><i class="fas fa-wave-square"></i> Configuración del ADC</a>
+                        <a href="./AVR-GCC/adc.html" class="tech-link"><i class="fas fa-sliders-h"></i> Canales y Referencias</a>
+                        <a href="./AVR-GCC/adc.html" class="tech-link"><i class="fas fa-tachometer-alt"></i> Lectura de Valores Analógicos</a>
+                    </div>
+                </div>
+                <div class="tech-card">
+                    <h3>Sensor DHT-11</h3>
+                    <div class="tech-links">
+                        <a href="./AVR-GCC/dht-11.html" class="tech-link"><i class="fas fa-temperature-low"></i> Protocolo de Comunicación</a>
+                        <a href="./AVR-GCC/dht-11.html" class="tech-link"><i class="fas fa-tint"></i> Medición de Humedad</a>
+                        <a href="./AVR-GCC/dht-11.html" class="tech-link"><i class="fas fa-thermometer-half"></i> Medición de Temperatura</a>
+                    </div>
+                </div>
+                <div class="tech-card">
+                    <h3>Memoria EEPROM</h3>
+                    <div class="tech-links">
+                        <a href="./AVR-GCC/eeprom.html" class="tech-link"><i class="fas fa-database"></i> Almacenamiento Persistente</a>
+                        <a href="./AVR-GCC/eeprom.html" class="tech-link"><i class="fas fa-pencil-alt"></i> Escritura de Datos</a>
+                        <a href="./AVR-GCC/eeprom.html" class="tech-link"><i class="fas fa-book-open"></i> Lectura de Datos</a>
+                    </div>
+                </div>
+                <div class="tech-card">
+                    <h3>Sensor HC-SR04</h3>
+                    <div class="tech-links">
+                        <a href="./AVR-GCC/hsr-04.html" class="tech-link"><i class="fas fa-ruler"></i> Medición de Distancia</a>
+                        <a href="./AVR-GCC/hsr-04.html" class="tech-link"><i class="fas fa-wave-square"></i> Generación de Pulso</a>
+                        <a href="./AVR-GCC/hsr-04.html" class="tech-link"><i class="fas fa-clock"></i> Medición de Tiempo de Echo</a>
+                    </div>
+                </div>
+                <div class="tech-card">
+                    <h3>Display LCD</h3>
+                    <div class="tech-links">
+                        <a href="./AVR-GCC/lcd.html" class="tech-link"><i class="fas fa-desktop"></i> Configuración del Display</a>
+                        <a href="./AVR-GCC/lcd.html" class="tech-link"><i class="fas fa-font"></i> Visualización de Texto</a>
+                        <a href="./AVR-GCC/lcd.html" class="tech-link"><i class="fas fa-sliders-h"></i> Control de Contrastre y Luz</a>
+                    </div>
+                </div>
+                <div class="tech-card">
+                    <h3>Modulación por Ancho de Pulso (PWM)</h3>
+                    <div class="tech-links">
+                        <a href="./AVR-GCC/pwm.html" class="tech-link"><i class="fas fa-sliders-h"></i> Generación de Señal PWM</a>
+                        <a href="./AVR-GCC/pwm.html" class="tech-link"><i class="fas fa-lightbulb"></i> Control de Intensidad LED</a>
+                        <a href="./AVR-GCC/pwm.html" class="tech-link"><i class="fas fa-cog"></i> Control de Motores</a>
+                    </div>
+                </div>
+                <div class="tech-card">
+                    <h3>Comunicación SPI</h3>
+                    <div class="tech-links">
+                        <a href="./AVR-GCC/spi.html" class="tech-link"><i class="fas fa-exchange-alt"></i> Protocolo SPI</a>
+                        <a href="./AVR-GCC/spi.html" class="tech-link"><i class="fas fa-microchip"></i> Configuración Maestro/Esclavo</a>
+                        <a href="./AVR-GCC/spi.html" class="tech-link"><i class="fas fa-bolt"></i> Transferencia de Datos</a>
+                    </div>
+                </div>
+                <div class="tech-card">
+                    <h3>Comunicación I2C</h3>
+                    <div class="tech-links">
+                        <a href="./AVR-GCC/i2c.html" class="tech-link"><i class="fas fa-road"></i> Protocolo I2C</a>
+                        <a href="./AVR-GCC/i2c.html" class="tech-link"><i class="fas fa-address-book"></i> Direccionamiento de Dispositivos</a>
+                        <a href="./AVR-GCC/i2c.html" class="tech-link"><i class="fas fa-envelope-open"></i> Lectura/Escritura de Registros</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="resources-section">
+            <h2><i class="fas fa-book-open"></i> Recursos Adicionales</h2>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <h3><i class="fas fa-sensor"></i> Sensores</h3>
+                    <p>Recursos para trabajar y entender diversos sensores</p>
+                    <a href="./resources/sensores.html" class="resource-link">Acceder</a>
+                </div>
+                <div class="resource-card">
+                    <h3><i class="fab fa-github"></i> GitHub</h3>
+                    <p>Guía básica para el uso de GitHub</p>
+                    <a href="./resources/github.html" class="resource-link">Explorar</a>
+                </div>
+                <div class="resource-card">
+                    <h3><i class="fas fa-file-pdf"></i> Documentación</h3>
+                    <p>Datasheets y manuales oficiales</p>
+                    <a href="#" class="resource-link">Descargar</a>
+                </div>
+                <div class="resource-card">
+                    <h3><i class="fas fa-video"></i> Tutoriales</h3>
+                    <p>Videotutoriales y guías paso a paso</p>
+                    <a href="#" class="resource-link">Ver</a>
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>Tecnologías de Microprocesamiento - ATmega328P © 2025</p>
+        </footer>
+    </div>    
+</body>
+</html>

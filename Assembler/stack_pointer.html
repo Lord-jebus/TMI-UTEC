@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stack Pointer del ATmega328P en Ensamblador</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c2461, #1e3799, #4a69bd);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 25px;
+            min-height: 350px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 18px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .register {
+            color: #66d9ef;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stack-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stack-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .stack-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .memory-diagram, .stack-operation {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 350px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .memory-graphic {
+            width: 280px;
+            height: 300px;
+            background: #2c3e50;
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .memory-cell {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            color: white;
+            border-bottom: 1px solid #3c5068;
+            position: relative;
+        }
+        
+        .memory-address {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            width: 60px;
+        }
+        
+        .memory-value {
+            font-family: 'Courier New', monospace;
+            margin-left: 15px;
+        }
+        
+        .stack-pointer {
+            position: absolute;
+            right: 10px;
+            color: #ffeb3b;
+            font-weight: bold;
+        }
+        
+        .stack-operation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .operation-log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .stack-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .memory-diagram, .stack-operation {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Stack Pointer del ATmega328P en Ensamblador</h1>
+            <p class="subtitle">Aprende sobre el registro SP, su funcionamiento y cómo utilizarlo en programación en ensamblador para el ATmega328P</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción al Stack Pointer</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es el Stack Pointer?</h3>
+                    <ul>
+                        <li>Registro de 16 bits (SPH:SPL)</li>
+                        <li>Apunta a la cima de la pila (stack) en memoria RAM</li>
+                        <li>Gestiona el almacenamiento temporal de datos</li>
+                        <li>Esencial para llamadas a subrutinas e interrupciones</li>
+                    </ul>
+                    
+                    <h3>Características en ATmega328P</h3>
+                    <ul>
+                        <li>Direccionamiento little-endian (SPL primero)</li>
+                        <li>Pila descendente (decrementa al hacer PUSH)</li>
+                        <li>Ubicada en la memoria interna de datos</li>
+                        <li>Dirección inicial: 0x08FF (después de registros)</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El Stack Pointer es crucial para el manejo de subrutinas y interrupciones
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Registros SPH y SPL</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Estructura del Stack Pointer</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Stack Pointer de 16 bits</span><br>
+                        <span class="comment">; SPH (High Byte) - I/O address 0x3E</span><br>
+                        <span class="comment">; SPL (Low Byte) - I/O address 0x3D</span><br><br>
+                        
+                        <span class="comment">; Ejemplo: Configurar SP a 0x08FF</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="define">HIGH</span>(RAMEND)  <span class="comment">; 0x08</span><br>
+                        <span class="keyword">out</span> <span class="register">SPH</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="define">LOW</span>(RAMEND)   <span class="comment">; 0xFF</span><br>
+                        <span class="keyword">out</span> <span class="register">SPL</span>, <span class="register">r16</span>
+                    </div>
+                    
+                    <h3>Registros relacionados</h3>
+                    <ul>
+                        <li>SPH (Stack Pointer High) - Dirección 0x3E</li>
+                        <li>SPL (Stack Pointer Low) - Dirección 0x3D</li>
+                        <li>RAMEND - Define el final de la RAM (0x08FF)</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    RAMEND está definido en el archivo de encabezado del microcontrolador
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Inicialización del Stack Pointer</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Configuración inicial</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Inicialización del Stack Pointer</span><br>
+                        <span class="comment">; al inicio del programa</span><br>
+                        <span class="label">init_stack:</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="define">HIGH</span>(RAMEND)  <span class="comment">; Cargar byte alto</span><br>
+                        <span class="keyword">out</span> <span class="register">SPH</span>, <span class="register">r16</span>         <span class="comment">; al Stack Pointer High</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="define">LOW</span>(RAMEND)   <span class="comment">; Cargar byte bajo</span><br>
+                        <span class="keyword">out</span> <span class="register">SPL</span>, <span class="register">r16</span>         <span class="comment">; al Stack Pointer Low</span><br>
+                        <span class="keyword">ret</span>
+                    </div>
+                    
+                    <h3>Consideraciones importantes</h3>
+                    <ul>
+                        <li>Debe inicializarse al inicio del programa</li>
+                        <li>Si no se inicializa, puede apuntar a área incorrecta</li>
+                        <li>Puede causar corrupción de datos o comportamiento impredecible</li>
+                        <li>Algunos programas de arranque lo inicializan automáticamente</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Siempre inicializa el Stack Pointer al comenzar tu programa
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Operaciones PUSH y POP</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Guardar datos en la pila (PUSH)</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Guardar registro en la pila</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span>  <span class="comment">; Decrementa SP y guarda r16</span><br><br>
+                        
+                        <span class="comment">; Equivalente en instrucciones:</span><br>
+                        <span class="keyword">sts</span> <span class="register">SPL</span>, <span class="register">r16</span>  <span class="comment">; No usar directamente</span><br>
+                        <span class="comment">; Mejor usar PUSH</span>
+                    </div>
+                    
+                    <h3>Recuperar datos de la pila (POP)</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Recuperar registro de la pila</span><br>
+                        <span class="keyword">pop</span> <span class="register">r16</span>   <span class="comment">; Lee dato y incrementa SP</span><br><br>
+                        
+                        <span class="comment">; Equivalente en instrucciones:</span><br>
+                        <span class="keyword">lds</span> <span class="register">r16</span>, <span class="register">SPL</span>  <span class="comment">; No usar directamente</span><br>
+                        <span class="comment">; Mejor usar POP</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    PUSH decrementa SP primero, luego guarda. POP lee primero, luego incrementa SP
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Uso en Subrutinas</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Llamadas a subrutinas</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Llamar a una subrutina</span><br>
+                        <span class="keyword">call</span> <span class="label">mi_subrutina</span><br><br>
+                        
+                        <span class="comment">; Esto automáticamente:</span><br>
+                        <span class="comment">; 1. Guarda la dirección de retorno en la pila</span><br>
+                        <span class="comment">; 2. Salta a la subrutina</span><br><br>
+                        
+                        <span class="comment">; Retornar de subrutina</span><br>
+                        <span class="label">mi_subrutina:</span><br>
+                        <span class="comment">; ... código ...</span><br>
+                        <span class="keyword">ret</span>  <span class="comment">; Recupera dirección de retorno</span>
+                    </div>
+                    
+                    <h3>Dirección de retorno</h3>
+                    <ul>
+                        <li>Se guardan 2 bytes (16 bits) por cada CALL</li>
+                        <li>Se guarda la dirección de la siguiente instrucción</li>
+                        <li>RET recupera esta dirección y salta a ella</li>
+                        <li>ICALL y RCALL también usan la pila</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    CALL guarda PC+1 en la pila (PC es de 16 bits en AVR)
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Uso en Interrupciones</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Manejo de interrupciones</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Cuando ocurre una interrupción:</span><br>
+                        <span class="comment">; 1. Completar instrucción actual</span><br>
+                        <span class="comment">; 2. Guardar PC en la pila</span><br>
+                        <span class="comment">; 3. Saltar al vector de interrupción</span><br>
+                        <span class="comment">; 4. Ejecutar rutina de servicio</span><br>
+                        <span class="comment">; 5. RETI recupera PC y habilita interrupciones</span><br><br>
+                        
+                        <span class="comment">; Rutina de servicio de interrupción</span><br>
+                        <span class="label">ISR_TIMER0_OVF_vect:</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span>      <span class="comment">; Guardar registros usados</span><br>
+                        <span class="keyword">in</span> <span class="register">r16</span>, <span class="register">SREG</span>  <span class="comment">; Guardar SREG</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span><br>
+                        <span class="comment">; ... código de interrupción ...</span><br>
+                        <span class="keyword">pop</span> <span class="register">r16</span>       <span class="comment">; Recuperar SREG</span><br>
+                        <span class="keyword">out</span> <span class="register">SREG</span>, <span class="register">r16</span><br>
+                        <span class="keyword">pop</span> <span class="register">r16</span>       <span class="comment">; Recuperar registro</span><br>
+                        <span class="keyword">reti</span>         <span class="comment">; Retorno de interrupción</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Las interrupciones guardan automáticamente el PC en la pila
+                </div>
+            </div>
+            
+            <!-- Presentación 7 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Preservación de Registros</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Guardar contexto</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Subrutina que preserva registros</span><br>
+                        <span class="label">mi_subrutina:</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span>      <span class="comment">; Guardar registros usados</span><br>
+                        <span class="keyword">push</span> <span class="register">r17</span><br>
+                        <span class="keyword">push</span> <span class="register">r18</span><br>
+                        <span class="keyword">in</span> <span class="register">r16</span>, <span class="register">SREG</span>  <span class="comment">; Guardar registro de estado</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span><br><br>
+                        
+                        <span class="comment">; ... código de la subrutina ...</span><br><br>
+                        
+                        <span class="keyword">pop</span> <span class="register">r16</span>       <span class="comment">; Recuperar SREG</span><br>
+                        <span class="keyword">out</span> <span class="register">SREG</span>, <span class="register">r16</span><br>
+                        <span class="keyword">pop</span> <span class="register">r18</span>       <span class="comment">; Recuperar en orden inverso</span><br>
+                        <span class="keyword">pop</span> <span class="register">r17</span><br>
+                        <span class="keyword">pop</span> <span class="register">r16</span><br>
+                        <span class="keyword">ret</span>
+                    </div>
+                    
+                    <h3>Registros a preservar</h3>
+                    <ul>
+                        <li>Registros que modifica la subrutina (r2-r17, r28-r31)</li>
+                        <li>Registro de estado (SREG)</li>
+                        <li>Registros que el llamante espera que no cambien</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Siempre preserva los registros que modificas en subrutinas
+                </div>
+            </div>
+            
+            <!-- Presentación 8 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Ejemplos Prácticos</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Intercambio de registros vía pila</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Intercambiar r16 y r17 usando la pila</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span><br>
+                        <span class="keyword">push</span> <span class="register">r17</span><br>
+                        <span class="keyword">pop</span> <span class="register">r16</span>   <span class="comment">; r16 = antiguo r17</span><br>
+                        <span class="keyword">pop</span> <span class="register">r17</span>   <span class="comment">; r17 = antiguo r16</span>
+                    </div>
+                    
+                    <h3>Salvado de múltiples registros</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Guardar todos los registros</span><br>
+                        <span class="keyword">push</span> <span class="register">r0</span><br>
+                        <span class="keyword">push</span> <span class="register">r1</span><br>
+                        <span class="comment">; ... hasta r31 ...</span><br>
+                        <span class="keyword">push</span> <span class="register">r31</span><br>
+                        <span class="keyword">in</span> <span class="register">r0</span>, <span class="register">SREG</span><br>
+                        <span class="keyword">push</span> <span class="register">r0</span><br><br>
+                        
+                        <span class="comment">; Recuperar en orden inverso</span><br>
+                        <span class="keyword">pop</span> <span class="register">r0</span><br>
+                        <span class="keyword">out</span> <span class="register">SREG</span>, <span class="register">r0</span><br>
+                        <span class="keyword">pop</span> <span class="register">r31</span><br>
+                        <span class="comment">; ... hasta r0 ...</span><br>
+                        <span class="keyword">pop</span> <span class="register">r1</span><br>
+                        <span class="keyword">pop</span> <span class="register">r0</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La pila es útil para operaciones temporales como intercambiar valores
+                </div>
+            </div>
+            
+            <!-- Presentación 9 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Consideraciones y Errores Comunes</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Problemas comunes</h3>
+                    <ul>
+                        <li>Desbordamiento de pila (stack overflow)</li>
+                        <li>Subdesbordamiento de pila (stack underflow)</li>
+                        <li>Desbalance entre PUSH y POP</li>
+                        <li>No inicializar el Stack Pointer</li>
+                        <li>Corrupción de pila por acceso directo a memoria</li>
+                    </ul>
+                    
+                    <h3>Buenas prácticas</h3>
+                    <ul>
+                        <li>Inicializar siempre el SP al inicio</li>
+                        <li>Emparejar cada PUSH con un POP</li>
+                        <li>Preservar registros en subrutinas</li>
+                        <li>Verificar espacio suficiente en pila para interrupciones anidadas</li>
+                        <li>Usar instrucciones PUSH/POP en lugar de acceso directo</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Un desbordamiento de pila puede corromper datos y causar comportamiento impredecible
+                </div>
+            </div>
+        </div>
+        
+        <div class="stack-demo">
+            <h2>Simulador de Operaciones con Stack Pointer</h2>
+            <p>Observa cómo funciona el Stack Pointer con diferentes operaciones:</p>
+            
+            <div class="stack-visualization">
+                <div class="memory-diagram">
+                    <h3>Memoria RAM y Stack</h3>
+                    <div class="memory-graphic" id="memory-graphic">
+                        <!-- Las celdas de memoria se generarán con JavaScript -->
+                    </div>
+                    <div class="register-value">
+                        SP: <span id="sp-value">0x08FF</span>
+                    </div>
+                </div>
+                
+                <div class="stack-operation">
+                    <h3>Operaciones con Stack</h3>
+                    
+                    <div class="operation-buttons">
+                        <button class="btn" id="push-btn">
+                            <i class="fas fa-level-down-alt"></i> PUSH R16
+                        </button>
+                        <button class="btn" id="pop-btn">
+                            <i class="fas fa-level-up-alt"></i> POP R16
+                        </button>
+                    </div>
+                    
+                    <div class="operation-buttons">
+                        <button class="btn" id="call-btn">
+                            <i class="fas fa-sign-in-alt"></i> CALL
+                        </button>
+                        <button class="btn" id="ret-btn">
+                            <i class="fas fa-sign-out-alt"></i> RET
+                        </button>
+                    </div>
+                    
+                    <div class="operation-log" id="operation-log">
+                        > Sistema inicializado<br>
+                        > SP apuntando a 0x08FF
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de Stack Pointer
+        document.addEventListener('DOMContentLoaded', function() {
+            const memoryGraphic = document.getElementById('memory-graphic');
+            const spValue = document.getElementById('sp-value');
+            const pushBtn = document.getElementById('push-btn');
+            const popBtn = document.getElementById('pop-btn');
+            const callBtn = document.getElementById('call-btn');
+            const retBtn = document.getElementById('ret-btn');
+            const operationLog = document.getElementById('operation-log');
+            
+            // Estado inicial
+            let stackPointer = 0x08FF;
+            let pcValue = 0x0200;
+            let stackData = {};
+            
+            // Generar visualización de memoria
+            function generateMemoryDisplay() {
+                memoryGraphic.innerHTML = '';
+                
+                // Crear celdas de memoria (solo las cercanas al SP)
+                for (let addr = stackPointer - 5; addr <= stackPointer + 2; addr++) {
+                    if (addr < 0x0080 || addr > 0x08FF) continue; // Solo RAM válida
+                    
+                    const cell = document.createElement('div');
+                    cell.className = 'memory-cell';
+                    
+                    const addressSpan = document.createElement('span');
+                    addressSpan.className = 'memory-address';
+                    addressSpan.textContent = '0x' + addr.toString(16).toUpperCase().padStart(4, '0');
+                    
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'memory-value';
+                    valueSpan.textContent = stackData[addr] !== undefined ? 
+                        '0x' + stackData[addr].toString(16).toUpperCase().padStart(2, '0') : '0x00';
+                    
+                    cell.appendChild(addressSpan);
+                    cell.appendChild(valueSpan);
+                    
+                    // Resaltar la posición actual del SP
+                    if (addr === stackPointer) {
+                        const spIndicator = document.createElement('span');
+                        spIndicator.className = 'stack-pointer';
+                        spIndicator.textContent = '← SP';
+                        cell.appendChild(spIndicator);
+                        cell.style.background = '#3c5068';
+                    }
+                    
+                    memoryGraphic.appendChild(cell);
+                }
+                
+                spValue.textContent = '0x' + stackPointer.toString(16).toUpperCase().padStart(4, '0');
+            }
+            
+            // Añadir mensaje al log
+            function addLogMessage(message) {
+                operationLog.innerHTML += '> ' + message + '<br>';
+                operationLog.scrollTop = operationLog.scrollHeight;
+            }
+            
+            // Operación PUSH
+            pushBtn.addEventListener('click', function() {
+                const randomValue = Math.floor(Math.random() * 256);
+                stackPointer--;
+                stackData[stackPointer] = randomValue;
+                
+                generateMemoryDisplay();
+                addLogMessage('PUSH: Guardado 0x' + randomValue.toString(16).toUpperCase() + 
+                             ' en 0x' + stackPointer.toString(16).toUpperCase());
+            });
+            
+            // Operación POP
+            popBtn.addEventListener('click', function() {
+                if (stackPointer >= 0x08FF) {
+                    addLogMessage('ERROR: Stack underflow - No hay datos para POP');
+                    return;
+                }
+                
+                const value = stackData[stackPointer];
+                delete stackData[stackPointer];
+                stackPointer++;
+                
+                generateMemoryDisplay();
+                addLogMessage('POP: Recuperado 0x' + value.toString(16).toUpperCase() + 
+                             ' desde 0x' + (stackPointer - 1).toString(16).toUpperCase());
+            });
+            
+            // Operación CALL
+            callBtn.addEventListener('click', function() {
+                // Guardar PC (2 bytes)
+                const pcHigh = (pcValue >> 8) & 0xFF;
+                const pcLow = pcValue & 0xFF;
+                
+                stackPointer--;
+                stackData[stackPointer] = pcHigh;
+                stackPointer--;
+                stackData[stackPointer] = pcLow;
+                
+                // Simular nuevo PC
+                pcValue = 0x0400;
+                
+                generateMemoryDisplay();
+                addLogMessage('CALL: Guardado PC=0x' + pcValue.toString(16).toUpperCase() + 
+                             ' en la pila. Nuevo PC=0x0400');
+            });
+            
+            // Operación RET
+            retBtn.addEventListener('click', function() {
+                if (stackPointer > 0x08FD) {
+                    addLogMessage('ERROR: Stack underflow - No hay dirección de retorno');
+                    return;
+                }
+                
+                // Recuperar PC (2 bytes)
+                const pcLow = stackData[stackPointer];
+                const pcHigh = stackData[stackPointer + 1];
+                
+                pcValue = (pcHigh << 8) | pcLow;
+                
+                delete stackData[stackPointer];
+                delete stackData[stackPointer + 1];
+                stackPointer += 2;
+                
+                generateMemoryDisplay();
+                addLogMessage('RET: Recuperado PC=0x' + pcValue.toString(16).toUpperCase() + 
+                             ' desde la pila');
+            });
+            
+            // Inicializar visualización
+            generateMemoryDisplay();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HC-SR04 con ATmega328P y AVR-GCC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 25px;
+            min-height: 350px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 18px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .include {
+            color: #ae81ff;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .sensor-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .sensor-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .sensor-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .sensor-diagram, .distance-display {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 350px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sensor-graphic {
+            width: 200px;
+            height: 100px;
+            background: #2c3e50;
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sensor-transmitter, .sensor-receiver {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            top: 35px;
+        }
+        
+        .sensor-transmitter {
+            background: #e74c3c;
+            left: 40px;
+        }
+        
+        .sensor-receiver {
+            background: #2ecc71;
+            right: 40px;
+        }
+        
+        .ultrasonic-wave {
+            position: absolute;
+            top: 45px;
+            left: 70px;
+            width: 0;
+            height: 10px;
+            background: #3498db;
+            border-radius: 5px;
+            transition: width 0.5s;
+        }
+        
+        .echo-wave {
+            position: absolute;
+            top: 45px;
+            right: 70px;
+            width: 0;
+            height: 10px;
+            background: #f1c40f;
+            border-radius: 5px;
+            transition: width 0.5s;
+        }
+        
+        .object {
+            position: absolute;
+            width: 30px;
+            height: 60px;
+            background: #7f8c8d;
+            top: 20px;
+            border-radius: 5px;
+        }
+        
+        .distance-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #3498db;
+            margin: 20px 0;
+        }
+        
+        .distance-unit {
+            font-size: 1.5em;
+            color: #7f8c8d;
+        }
+        
+        .slider-container {
+            margin: 20px 0;
+        }
+        
+        .slider {
+            width: 80%;
+            margin: 15px 0;
+        }
+        
+        .pulse-diagram {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .sensor-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .sensor-diagram, .distance-display {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sensor Ultrasónico HC-SR04 con ATmega328P</h1>
+            <p class="subtitle">Aprende a utilizar el sensor de distancia HC-SR04 con el microcontrolador ATmega328P programado en C usando AVR-GCC</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción al HC-SR04</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es el HC-SR04?</h3>
+                    <ul>
+                        <li>Sensor de distancia por ultrasonido</li>
+                        <li>Rango de medición: 2cm - 400cm</li>
+                        <li>Precisión: ~3mm</li>
+                        <li>Ángulo de detección: 15°</li>
+                        <li>Alimentación: 5V DC</li>
+                    </ul>
+                    
+                    <h3>Principio de funcionamiento</h3>
+                    <ul>
+                        <li>Emite un pulso ultrasónico (40kHz)</li>
+                        <li>Mide el tiempo hasta recibir el eco</li>
+                        <li>Calcula la distancia basado en la velocidad del sonido</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Fórmula: Distancia = (Tiempo × Velocidad del sonido) / 2
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Conexión con ATmega328P</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Pines del HC-SR04</h3>
+                    <ul>
+                        <li>VCC - Alimentación 5V</li>
+                        <li>GND - Tierra</li>
+                        <li>TRIG - Disparador (input)</li>
+                        <li>ECHO - Eco (output)</li>
+                    </ul>
+                    
+                    <h3>Conexión con ATmega328P</h3>
+                    <ul>
+                        <li>VCC → 5V</li>
+                        <li>GND → GND</li>
+                        <li>TRIG → PD2 (Pin digital 2)</li>
+                        <li>ECHO → PD3 (Pin digital 3)</li>
+                    </ul>
+                    
+                    <h3>Consideraciones</h3>
+                    <ul>
+                        <li>Usar resistencias de pull-down si es necesario</li>
+                        <li>Evitar obstáculos cerca del sensor</li>
+                        <li>Alejar de fuentes de sonido de alta frecuencia</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El pin ECHO requiere una resistencia de 1kΩ para proteger el microcontrolador
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Configuración de Pines</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Inicialización de pines</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Definición de pines</span><br>
+                        <span class="define">#define</span> TRIG_PIN PD2<br>
+                        <span class="define">#define</span> ECHO_PIN PD3<br>
+                        <span class="define">#define</span> TRIG_PORT PORTD<br>
+                        <span class="define">#define</span> ECHO_PIN PIND<br>
+                        <span class="define">#define</span> DDR_TRIG DDRD<br>
+                        <span class="define">#define</span> DDR_ECHO DDRD<br><br>
+                        
+                        <span class="comment">// Inicializar pines del sensor</span><br>
+                        <span class="keyword">void</span> <span class="function">hc_sr04_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar TRIG como salida</span><br>
+                        &nbsp;&nbsp;DDR_TRIG |= (1 &lt;&lt; TRIG_PIN);<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar ECHO como entrada</span><br>
+                        &nbsp;&nbsp;DDR_ECHO &amp;= ~(1 &lt;&lt; ECHO_PIN);<br>
+                        &nbsp;&nbsp;<span class="comment">// Inicialmente TRIG en bajo</span><br>
+                        &nbsp;&nbsp;TRIG_PORT &amp;= ~(1 &lt;&lt; TRIG_PIN);<br>
+                        }
+                    </div>
+                    
+                    <h3>Registros importantes</h3>
+                    <ul>
+                        <li>DDRx - Data Direction Register</li>
+                        <li>PORTx - Puerto de salida</li>
+                        <li>PINx - Puerto de entrada</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Es importante configurar correctamente los registros de dirección de datos
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Medición de Distancia</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Secuencia de medición</h3>
+                    <ol>
+                        <li>Enviar pulso de 10μs en TRIG</li>
+                        <li>Esperar a que ECHO se ponga en HIGH</li>
+                        <li>Medir el tiempo que ECHO permanece en HIGH</li>
+                        <li>Calcular distancia</li>
+                    </ol>
+                    
+                    <h3>Función de medición</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Medir distancia en centímetros</span><br>
+                        <span class="keyword">uint16_t</span> <span class="function">hc_sr04_get_distance</span>() {<br>
+                        &nbsp;&nbsp;<span class="keyword">uint32_t</span> pulse_width = 0;<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Generar pulso de 10μs en TRIG</span><br>
+                        &nbsp;&nbsp;TRIG_PORT |= (1 &lt;&lt; TRIG_PIN);<br>
+                        &nbsp;&nbsp;_delay_us(10);<br>
+                        &nbsp;&nbsp;TRIG_PORT &amp;= ~(1 &lt;&lt; TRIG_PIN);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Esperar flanco de subida en ECHO</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (!(ECHO_PIN &amp; (1 &lt;&lt; ECHO_PIN)));<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Medir el tiempo que ECHO está en alto</span><br>
+                        &nbsp;&nbsp;TCCR1B = (1 &lt;&lt; CS11); <span class="comment">// Preescaler 8</span><br>
+                        &nbsp;&nbsp;TCNT1 = 0; <span class="comment">// Reiniciar timer</span><br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Esperar flanco de bajada</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (ECHO_PIN &amp; (1 &lt;&lt; ECHO_PIN)) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;pulse_width = TCNT1;<br>
+                        &nbsp;&nbsp;}<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Calcular distancia (usando 58.0 para cm)</span><br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> pulse_width / 58.0;<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Velocidad del sonido: 343 m/s (aprox. 1cm cada 29.1μs)
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Uso de Timers para Medición</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Configuración del Timer1</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Inicializar Timer1 para medición</span><br>
+                        <span class="keyword">void</span> <span class="function">timer1_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Modo normal, preescaler 8</span><br>
+                        &nbsp;&nbsp;TCCR1A = 0;<br>
+                        &nbsp;&nbsp;TCCR1B = (1 &lt;&lt; CS11); <span class="comment">// Preescaler 8</span><br>
+                        &nbsp;&nbsp;TCNT1 = 0; <span class="comment">// Valor inicial</span><br>
+                        }
+                    </div>
+                    
+                    <h3>Cálculo de distancia preciso</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Medición precisa con Timer1</span><br>
+                        <span class="keyword">float</span> <span class="function">get_precise_distance</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// ... (iniciar pulso como antes)</span><br>
+                        &nbsp;&nbsp;<span class="comment">// Usar Timer1 para medición</span><br>
+                        &nbsp;&nbsp;TCCR1B = (1 &lt;&lt; CS11); <span class="comment">// Preescaler 8</span><br>
+                        &nbsp;&nbsp;TCNT1 = 0;<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Esperar hasta que ECHO sea bajo</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (ECHO_PIN &amp; (1 &lt;&lt; ECHO_PIN));<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Detener timer</span><br>
+                        &nbsp;&nbsp;TCCR1B = 0;<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Calcular tiempo en microsegundos</span><br>
+                        &nbsp;&nbsp;<span class="keyword">float</span> pulse_time = TCNT1 * 0.5; <span class="comment">// Cada tick = 0.5μs con preescaler 8</span><br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Distancia = (tiempo × velocidad del sonido) / 2</span><br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> (pulse_time * 0.0343) / 2;<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Con F_CPU=16MHz y preescaler 8, cada tick del Timer1 = 0.5μs
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Ejemplo Completo</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Programa completo con UART</h3>
+                    
+                    <div class="code-block">
+                        <span class="include">#include</span> <span class="keyword">&lt;avr/io.h&gt;</span><br>
+                        <span class="include">#include</span> <span class="keyword">&lt;util/delay.h&gt;</span><br>
+                        <span class="include">#include</span> <span class="keyword">&lt;stdio.h&gt;</span><br><br>
+                        
+                        <span class="comment">// Inicializar UART para debug</span><br>
+                        <span class="keyword">void</span> <span class="function">uart_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// ... (configuración UART)</span><br>
+                        }<br><br>
+                        
+                        <span class="comment">// Función principal</span><br>
+                        <span class="keyword">int</span> <span class="function">main</span>(<span class="keyword">void</span>) {<br>
+                        &nbsp;&nbsp;uart_init();<br>
+                        &nbsp;&nbsp;hc_sr04_init();<br>
+                        &nbsp;&nbsp;timer1_init();<br><br>
+                        
+                        &nbsp;&nbsp;<span class="keyword">char</span> buffer[20];<br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (1) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">uint16_t</span> distance = hc_sr04_get_distance();<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;sprintf(buffer, "Distancia: %u cm\n", distance);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Enviar por UART</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;_delay_ms(500);<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                    
+                    <h3>Aplicaciones</h3>
+                    <ul>
+                        <li>Robots evasores de obstáculos</li>
+                        <li>Sistemas de estacionamiento</li>
+                        <li>Medición de nivel de líquidos</li>
+                        <li>Detección de presencia</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Compilar con: avr-gcc -mmcu=atmega328p -Os hc_sr04.c -o hc_sr04.elf
+                </div>
+            </div>
+        </div>
+        
+        <div class="sensor-demo">
+            <h2>Simulador de Sensor HC-SR04</h2>
+            <p>Observa cómo funciona la medición de distancia por ultrasonido:</p>
+            
+            <div class="sensor-visualization">
+                <div class="sensor-diagram">
+                    <h3>Sensor HC-SR04</h3>
+                    <div class="sensor-graphic">
+                        <div class="sensor-transmitter"></div>
+                        <div class="sensor-receiver"></div>
+                        <div class="ultrasonic-wave" id="ultrasonic-wave"></div>
+                        <div class="echo-wave" id="echo-wave"></div>
+                        <div class="object" id="object" style="right: 100px;"></div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="distance-slider">Distancia del objeto: <span id="distance-value">20</span> cm</label>
+                        <input type="range" id="distance-slider" class="slider" min="2" max="400" value="20">
+                    </div>
+                    
+                    <button class="btn" id="measure-btn">
+                        <i class="fas fa-ruler"></i> Medir Distancia
+                    </button>
+                </div>
+                
+                <div class="distance-display">
+                    <h3>Medición</h3>
+                    <div class="distance-value" id="measured-distance">20</div>
+                    <div class="distance-unit">centímetros</div>
+                    
+                    <div class="pulse-diagram">
+                        <p>Pulso TRIG: 10μs</p>
+                        <p>Tiempo ECHO: <span id="pulse-time">1160</span> μs</p>
+                        <p>Fórmula: (<span id="pulse-time-formula">1160</span> × 0.0343) / 2 = <span id="calculated-distance">20</span> cm</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de sensor HC-SR04
+        const distanceSlider = document.getElementById('distance-slider');
+        const distanceValue = document.getElementById('distance-value');
+        const object = document.getElementById('object');
+        const ultrasonicWave = document.getElementById('ultrasonic-wave');
+        const echoWave = document.getElementById('echo-wave');
+        const measureBtn = document.getElementById('measure-btn');
+        const measuredDistance = document.getElementById('measured-distance');
+        const pulseTime = document.getElementById('pulse-time');
+        const pulseTimeFormula = document.getElementById('pulse-time-formula');
+        const calculatedDistance = document.getElementById('calculated-distance');
+        
+        // Actualizar posición del objeto
+        distanceSlider.addEventListener('input', function() {
+            const distance = parseInt(this.value);
+            distanceValue.textContent = distance;
+            
+            // Calcular posición (de 70px a 270px)
+            const position = 70 + (distance / 400) * 200;
+            object.style.right = position + 'px';
+        });
+        
+        // Simular medición
+        measureBtn.addEventListener('click', function() {
+            const distance = parseInt(distanceSlider.value);
+            
+            // Calcular tiempo de pulso (usando 58μs por cm)
+            const pulseDuration = distance * 58;
+            pulseTime.textContent = pulseDuration;
+            pulseTimeFormula.textContent = pulseDuration;
+            
+            // Mostrar distancia calculada
+            measuredDistance.textContent = distance;
+            calculatedDistance.textContent = distance;
+            
+            // Animación de ondas
+            animateMeasurement(distance);
+        });
+        
+        // Animación de medición
+        function animateMeasurement(distance) {
+            // Onda ultrasónica de ida
+            ultrasonicWave.style.width = '0';
+            ultrasonicWave.style.display = 'block';
+            
+            setTimeout(() => {
+                ultrasonicWave.style.width = (70 + (distance / 400) * 200) + 'px';
+            }, 10);
+            
+            // Onda de eco (después de un retardo)
+            setTimeout(() => {
+                echoWave.style.width = '0';
+                echoWave.style.display = 'block';
+                
+                setTimeout(() => {
+                    echoWave.style.width = (70 + (distance / 400) * 200) + 'px';
+                }, 10);
+                
+                // Ocultar ondas después de la animación
+                setTimeout(() => {
+                    ultrasonicWave.style.display = 'none';
+                    echoWave.style.display = 'none';
+                }, 1000);
+            }, 600 + (distance * 2));
+        }
+        
+        // Inicializar visualización
+        distanceSlider.dispatchEvent(new Event('input'));
+    </script>
+</body>
+</html>

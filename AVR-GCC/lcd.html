@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LCD Paralela e I2C con ATmega328P</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f3057, #00587a, #008891);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.4em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 20px;
+            min-height: 320px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            font-size: 1.2em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 10px;
+            padding-left: 22px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.3em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.9em;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .include {
+            color: #ae81ff;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .lcd-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .lcd-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .lcd-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .lcd-display {
+            width: 300px;
+            height: 120px;
+            background: #2c3e50;
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            padding: 15px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .lcd-screen {
+            width: 100%;
+            height: 100%;
+            background: #c8e6c9;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            color: #2e7d32;
+            text-align: left;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .lcd-line {
+            margin-bottom: 5px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .lcd-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: #2e7d32;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .connection-diagram {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .connection {
+            margin: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 280px;
+        }
+        
+        .pin-list {
+            text-align: left;
+            margin-top: 10px;
+        }
+        
+        .pin-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .i2c-module {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .i2c-address {
+            font-family: 'Courier New', monospace;
+            background: #2d3e50;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .lcd-visualization {
+                flex-direction: column;
+            }
+            
+            .connection {
+                width: 100%;
+                max-width: 350px;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Pantalla LCD Paralela e I2C con ATmega328P</h1>
+            <p class="subtitle">Aprende a utilizar pantallas LCD 16x2 en modo paralelo y con adaptador I2C usando el microcontrolador ATmega328P programado en C con AVR-GCC</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción a LCD 16x2</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características</h3>
+                    <ul>
+                        <li>Pantalla de 16 caracteres × 2 líneas</li>
+                        <li>Controlador HD44780 o compatible</li>
+                        <li>Modo de 4 u 8 bits</li>
+                        <li>Comunicación paralela o serial (I2C)</li>
+                        <li>Bajo consumo de energía</li>
+                    </ul>
+                    
+                    <h3>Aplicaciones</h3>
+                    <ul>
+                        <li>Sistemas embebidos</li>
+                        <li>Instrumentación</li>
+                        <li>Interfaz de usuario</li>
+                        <li>Proyectos educativos</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La pantalla LCD 16x2 es el display más popular para proyectos con microcontroladores
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Pines LCD Paralelo</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Conexión básica</h3>
+                    <ul>
+                        <li>VSS - Tierra (GND)</li>
+                        <li>VDD - Alimentación (+5V)</li>
+                        <li>V0 - Contraste (potenciómetro)</li>
+                        <li>RS - Register Select</li>
+                        <li>RW - Read/Write (generalmente a GND)</li>
+                        <li>E - Enable</li>
+                        <li>D0-D7 - Bus de datos</li>
+                        <li>A/K - Backlight +/-</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    En modo 4 bits se usan D4-D7, en modo 8 bits se usan D0-D7
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Configuración Modo 4 Bits</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Inicialización LCD</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Definición de pines</span><br>
+                        <span class="define">#define</span> RS PD0<br>
+                        <span class="define">#define</span> EN PD1<br>
+                        <span class="define">#define</span> D4 PD4<br>
+                        <span class="define">#define</span> D5 PD5<br>
+                        <span class="define">#define</span> D6 PD6<br>
+                        <span class="define">#define</span> D7 PD7<br><br>
+                        
+                        <span class="comment">// Inicializar pines</span><br>
+                        <span class="keyword">void</span> <span class="function">lcd_init_pins</span>() {<br>
+                        &nbsp;&nbsp;DDRD |= (1 &lt;&lt; RS) | (1 &lt;&lt; EN) | (1 &lt;&lt; D4) |<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(1 &lt;&lt; D5) | (1 &lt;&lt; D6) | (1 &lt;&lt; D7);<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El modo 4 bits requiere menos pines pero es más lento que el modo 8 bits
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Función de Envío de Comandos</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Envío de nibbles (4 bits)</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Enviar nibble a la LCD</span><br>
+                        <span class="keyword">void</span> <span class="function">lcd_send_nibble</span>(<span class="keyword">uint8_t</span> nibble) {<br>
+                        &nbsp;&nbsp;<span class="keyword">if</span> (nibble & 0x01) PORTD |= (1 &lt;&lt; D4);<br>
+                        &nbsp;&nbsp;<span class="keyword">else</span> PORTD &amp;= ~(1 &lt;&lt; D4);<br>
+                        &nbsp;&nbsp;<span class="keyword">if</span> (nibble & 0x02) PORTD |= (1 &lt;&lt; D5);<br>
+                        &nbsp;&nbsp;<span class="keyword">else</span> PORTD &amp;= ~(1 &lt;&lt; D5);<br>
+                        &nbsp;&nbsp;<span class="keyword">if</span> (nibble & 0x04) PORTD |= (1 &lt;&lt; D6);<br>
+                        &nbsp;&nbsp;<span class="keyword">else</span> PORTD &amp;= ~(1 &lt;&lt; D6);<br>
+                        &nbsp;&nbsp;<span class="keyword">if</span> (nibble & 0x08) PORTD |= (1 &lt;&lt; D7);<br>
+                        &nbsp;&nbsp;<span class="keyword">else</span> PORTD &amp;= ~(1 &lt;&lt; D7);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Pulso en Enable</span><br>
+                        &nbsp;&nbsp;PORTD |= (1 &lt;&lt; EN);<br>
+                        &nbsp;&nbsp;_delay_us(1);<br>
+                        &nbsp;&nbsp;PORTD &amp;= ~(1 &lt;&lt; EN);<br>
+                        &nbsp;&nbsp;_delay_us(100);<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El pulso en el pin E (Enable) es crucial para que la LCD capture los datos
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Función de Inicialización LCD</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Secuencia de inicialización</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Inicializar LCD en modo 4 bits</span><br>
+                        <span class="keyword">void</span> <span class="function">lcd_init</span>() {<br>
+                        &nbsp;&nbsp;_delay_ms(50);<br>
+                        &nbsp;&nbsp;PORTD &amp;= ~(1 &lt;&lt; RS); <span class="comment">// Modo comando</span><br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Secuencia de inicialización</span><br>
+                        &nbsp;&nbsp;lcd_send_nibble(0x03);<br>
+                        &nbsp;&nbsp;_delay_ms(5);<br>
+                        &nbsp;&nbsp;lcd_send_nibble(0x03);<br>
+                        &nbsp;&nbsp;_delay_us(100);<br>
+                        &nbsp;&nbsp;lcd_send_nibble(0x03);<br>
+                        &nbsp;&nbsp;_delay_us(100);<br>
+                        &nbsp;&nbsp;lcd_send_nibble(0x02); <span class="comment">// Modo 4 bits</span><br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Configurar función: 4 bits, 2 líneas, font 5x8</span><br>
+                        &nbsp;&nbsp;lcd_send_command(0x28);<br>
+                        &nbsp;&nbsp;lcd_send_command(0x0C); <span class="comment">// Display on, cursor off</span><br>
+                        &nbsp;&nbsp;lcd_send_command(0x06); <span class="comment">// Increment cursor</span><br>
+                        &nbsp;&nbsp;lcd_send_command(0x01); <span class="comment">// Clear display</span><br>
+                        &nbsp;&nbsp;_delay_ms(2);<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La secuencia de inicialización es crítica para el correcto funcionamiento
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Función de Envío de Caracteres</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Escribir en la LCD</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Enviar comando a la LCD</span><br>
+                        <span class="keyword">void</span> <span class="function">lcd_send_command</span>(<span class="keyword">uint8_t</span> cmd) {<br>
+                        &nbsp;&nbsp;PORTD &amp;= ~(1 &lt;&lt; RS); <span class="comment">// Modo comando</span><br>
+                        &nbsp;&nbsp;lcd_send_nibble(cmd >> 4);<br>
+                        &nbsp;&nbsp;lcd_send_nibble(cmd & 0x0F);<br>
+                        }<br><br>
+                        
+                        <span class="comment">// Enviar carácter a la LCD</span><br>
+                        <span class="keyword">void</span> <span class="function">lcd_send_data</span>(<span class="keyword">uint8_t</span> data) {<br>
+                        &nbsp;&nbsp;PORTD |= (1 &lt;&lt; RS); <span class="comment">// Modo datos</span><br>
+                        &nbsp;&nbsp;lcd_send_nibble(data >> 4);<br>
+                        &nbsp;&nbsp;lcd_send_nibble(data & 0x0F);<br>
+                        }<br><br>
+                        
+                        <span class="comment">// Escribir cadena de texto</span><br>
+                        <span class="keyword">void</span> <span class="function">lcd_write_string</span>(<span class="keyword">char</span> *str) {<br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (*str) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;lcd_send_data(*str++);<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Los comandos se envían con RS=0, los datos con RS=1
+                </div>
+            </div>
+            
+            <!-- Presentación 7 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción a I2C</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Protocolo I2C</h3>
+                    <ul>
+                        <li>Inter-Integrated Circuit</li>
+                        <li>Comunicación serial sincrónica</li>
+                        <li>Dos cables: SDA (datos) y SCL (reloj)</li>
+                        <li>Protocolo maestro-esclavo</li>
+                        <li>Múltiples dispositivos en el mismo bus</li>
+                    </ul>
+                    
+                    <h3>Ventajas para LCD</h3>
+                    <ul>
+                        <li>Solo 2 pines necesarios</li>
+                        <li>Reducción de cableado</li>
+                        <li>Múltiples dispositivos I2C</li>
+                        <li>Más fácil de expandir</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El protocolo I2C fue desarrollado por Philips en 1982
+                </div>
+            </div>
+            
+            <!-- Presentación 8 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Adaptador I2C para LCD</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características del módulo</h3>
+                    <ul>
+                        <li>Basado en el chip PCF8574</li>
+                        <li>Conversión de I2C a paralelo</li>
+                        <li>Dirección I2C configurable (0x20-0x27)</li>
+                        <li>Alimentación: 5V o 3.3V</li>
+                        <li>Potenciómetro integrado para contraste</li>
+                    </ul>
+                    
+                    <h3>Conexión</h3>
+                    <ul>
+                        <li>GND - Tierra</li>
+                        <li>VCC - Alimentación 5V</li>
+                        <li>SDA - Datos I2C</li>
+                        <li>SCL - Reloj I2C</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El módulo I2C simplifica enormemente la conexión de la LCD
+                </div>
+            </div>
+            
+            <!-- Presentación 9 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Configuración I2C en ATmega328P</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Inicialización I2C (TWI)</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Inicializar I2C a 100kHz</span><br>
+                        <span class="keyword">void</span> <span class="function">i2c_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Establecer frecuencia: 16MHz/(16+2*TWBR*1)</span><br>
+                        &nbsp;&nbsp;TWSR = 0; <span class="comment">// Preescaler 1</span><br>
+                        &nbsp;&nbsp;TWBR = ((F_CPU / 100000) - 16) / 2;<br>
+                        &nbsp;&nbsp;TWCR = (1 &lt;&lt; TWEN); <span class="comment">// Habilitar TWI</span><br>
+                        }<br><br>
+                        
+                        <span class="comment">// Iniciar condición de start</span><br>
+                        <span class="keyword">void</span> <span class="function">i2c_start</span>() {<br>
+                        &nbsp;&nbsp;TWCR = (1 &lt;&lt; TWINT) | (1 &lt;&lt; TWSTA) | (1 &lt;&lt; TWEN);<br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (!(TWCR & (1 &lt;&lt; TWINT)));<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El módulo TWI (Two-Wire Interface) del ATmega328P maneja la comunicación I2C
+                </div>
+            </div>
+            
+            <!-- Presentación 10 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Función de Escritura I2C</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Envío de datos por I2C</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Enviar byte por I2C</span><br>
+                        <span class="keyword">void</span> <span class="function">i2c_write</span>(<span class="keyword">uint8_t</span> data) {<br>
+                        &nbsp;&nbsp;TWDR = data;<br>
+                        &nbsp;&nbsp;TWCR = (1 &lt;&lt; TWINT) | (1 &lt;&lt; TWEN);<br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (!(TWCR & (1 &lt;&lt; TWINT)));<br>
+                        }<br><br>
+                        
+                        <span class="comment">// Detener comunicación I2C</span><br>
+                        <span class="keyword">void</span> <span class="function">i2c_stop</span>() {<br>
+                        &nbsp;&nbsp;TWCR = (1 &lt;&lt; TWINT) | (1 &lt;&lt; TWSTO) | (1 &lt;&lt; TWEN);<br>
+                        }
+                    </div>
+                    
+                    <h3>Escritura al módulo I2C</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Enviar comando a LCD por I2C</span><br>
+                        <span class="keyword">void</span> <span class="function">lcd_i2c_write</span>(<span class="keyword">uint8_t</span> data, <span class="keyword">uint8_t</span> mode) {<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> high = data & 0xF0;<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> low = (data &lt;&lt; 4) & 0xF0;<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> data_arr[4];<br>
+                        &nbsp;&nbsp;data_arr[0] = high | mode | LCD_BACKLIGHT | EN;<br>
+                        &nbsp;&nbsp;data_arr[1] = high | mode | LCD_BACKLIGHT;<br>
+                        &nbsp;&nbsp;data_arr[2] = low | mode | LCD_BACKLIGHT | EN;<br>
+                        &nbsp;&nbsp;data_arr[3] = low | mode | LCD_BACKLIGHT;<br><br>
+                        
+                        &nbsp;&nbsp;i2c_start();<br>
+                        &nbsp;&nbsp;i2c_write(LCD_ADDR &lt;&lt; 1);<br>
+                        &nbsp;&nbsp;<span class="keyword">for</span> (<span class="keyword">uint8_t</span> i = 0; i < 4; i++) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;i2c_write(data_arr[i]);<br>
+                        &nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;i2c_stop();<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La escritura I2C requiere el envío de la dirección del dispositivo y los datos
+                </div>
+            </div>
+            
+            <!-- Presentación 11 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Inicialización LCD con I2C</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Secuencia de inicialización I2C</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Inicializar LCD con I2C</span><br>
+                        <span class="keyword">void</span> <span class="function">lcd_i2c_init</span>() {<br>
+                        &nbsp;&nbsp;_delay_ms(50);<br>
+                        &nbsp;&nbsp;<span class="comment">// Secuencia de inicialización</span><br>
+                        &nbsp;&nbsp;lcd_i2c_write(0x03, LCD_COMMAND);<br>
+                        &nbsp;&nbsp;_delay_ms(5);<br>
+                        &nbsp;&nbsp;lcd_i2c_write(0x03, LCD_COMMAND);<br>
+                        &nbsp;&nbsp;_delay_us(100);<br>
+                        &nbsp;&nbsp;lcd_i2c_write(0x03, LCD_COMMAND);<br>
+                        &nbsp;&nbsp;_delay_us(100);<br>
+                        &nbsp;&nbsp;lcd_i2c_write(0x02, LCD_COMMAND);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Configurar función</span><br>
+                        &nbsp;&nbsp;lcd_i2c_write(0x28, LCD_COMMAND);<br>
+                        &nbsp;&nbsp;lcd_i2c_write(0x0C, LCD_COMMAND);<br>
+                        &nbsp;&nbsp;lcd_i2c_write(0x06, LCD_COMMAND);<br>
+                        &nbsp;&nbsp;lcd_i2c_write(0x01, LCD_COMMAND);<br>
+                        &nbsp;&nbsp;_delay_ms(2);<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La secuencia de inicialización es similar al modo paralelo pero usando I2C
+                </div>
+            </div>
+            
+            <!-- Presentación 12 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Ejemplo Completo con I2C</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Programa completo</h3>
+                    
+                    <div class="code-block">
+                        <span class="include">#include</span> <span class="keyword">&lt;avr/io.h&gt;</span><br>
+                        <span class="include">#include</span> <span class="keyword">&lt;util/delay.h&gt;</span><br><br>
+                        
+                        <span class="define">#define</span> LCD_ADDR 0x27<br>
+                        <span class="define">#define</span> LCD_COMMAND 0<br>
+                        <span class="define">#define</span> LCD_DATA 1<br>
+                        <span class="define">#define</span> LCD_BACKLIGHT 0x08<br>
+                        <span class="define">#define</span> EN 0x04<br><br>
+                        
+                        <span class="comment">// Prototipos de funciones</span><br>
+                        <span class="keyword">void</span> i2c_init();<br>
+                        <span class="keyword">void</span> i2c_start();<br>
+                        <span class="keyword">void</span> i2c_write(<span class="keyword">uint8_t</span> data);<br>
+                        <span class="keyword">void</span> i2c_stop();<br>
+                        <span class="keyword">void</span> lcd_i2c_write(<span class="keyword">uint8_t</span> data, <span class="keyword">uint8_t</span> mode);<br>
+                        <span class="keyword">void</span> lcd_i2c_init();<br>
+                        <span class="keyword">void</span> lcd_i2c_write_string(<span class="keyword">char</span> *str);<br><br>
+                        
+                        <span class="keyword">int</span> <span class="function">main</span>() {<br>
+                        &nbsp;&nbsp;i2c_init();<br>
+                        &nbsp;&nbsp;lcd_i2c_init();<br><br>
+                        
+                        &nbsp;&nbsp;<span class="keyword">while</span>(1) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;lcd_i2c_write(0x80, LCD_COMMAND); <span class="comment">// Línea 1</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;lcd_i2c_write_string("Hola Mundo!");<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;lcd_i2c_write(0xC0, LCD_COMMAND); <span class="comment">// Línea 2</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;lcd_i2c_write_string("ATmega328P+I2C");<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;_delay_ms(1000);<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Compilar con: avr-gcc -mmcu=atmega328p -Os lcd_i2c.c -o lcd_i2c.elf
+                </div>
+            </div>
+        </div>
+        
+        <div class="lcd-demo">
+            <h2>Simulador de LCD</h2>
+            <p>Escribe texto para ver cómo se mostraría en una pantalla LCD 16x2:</p>
+            
+            <div class="lcd-display">
+                <div class="lcd-screen">
+                    <div class="lcd-line" id="line1">                </div>
+                    <div class="lcd-line" id="line2">                </div>
+                </div>
+            </div>
+            
+            <div class="connection-diagram">
+                <div class="connection">
+                    <h3>Conexión Paralela</h3>
+                    <div class="pin-list">
+                        <div class="pin-item"><span>VSS</span><span>GND</span></div>
+                        <div class="pin-item"><span>VDD</span><span>5V</span></div>
+                        <div class="pin-item"><span>V0</span><span>Potenciómetro</span></div>
+                        <div class="pin-item"><span>RS</span><span>PD0</span></div>
+                        <div class="pin-item"><span>E</span><span>PD1</span></div>
+                        <div class="pin-item"><span>D4-D7</span><span>PD4-PD7</span></div>
+                        <div class="pin-item"><span>A/K</span><span>5V/GND</span></div>
+                    </div>
+                </div>
+                
+                <div class="connection">
+                    <h3>Conexión I2C</h3>
+                    <div class="pin-list">
+                        <div class="pin-item"><span>GND</span><span>GND</span></div>
+                        <div class="pin-item"><span>VCC</span><span>5V</span></div>
+                        <div class="pin-item"><span>SDA</span><span>PC4</span></div>
+                        <div class="pin-item"><span>SCL</span><span>PC5</span></div>
+                    </div>
+                    
+                    <div class="i2c-module">
+                        <h4>Módulo I2C</h4>
+                        <p>Dirección: <span class="i2c-address">0x27</span></p>
+                        <p>PCF8574</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <input type="text" id="lcd-input1" placeholder="Texto para línea 1" style="padding: 10px; width: 250px; margin: 5px;">
+                <input type="text" id="lcd-input2" placeholder="Texto para línea 2" style="padding: 10px; width: 250px; margin: 5px;">
+                <button class="btn" id="update-lcd">
+                    <i class="fas fa-sync"></i> Actualizar LCD
+                </button>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de LCD
+        const lcdInput1 = document.getElementById('lcd-input1');
+        const lcdInput2 = document.getElementById('lcd-input2');
+        const updateLcdBtn = document.getElementById('update-lcd');
+        const line1 = document.getElementById('line1');
+        const line2 = document.getElementById('line2');
+        
+        // Función para actualizar el display LCD
+        function updateLcdDisplay() {
+            const text1 = lcdInput1.value.padEnd(16, ' ').substring(0, 16);
+            const text2 = lcdInput2.value.padEnd(16, ' ').substring(0, 16);
+            
+            line1.innerHTML = text1;
+            line2.innerHTML = text2;
+            
+            // Añadir cursor parpadeante
+            line1.innerHTML += '<div class="lcd-cursor"></div>';
+        }
+        
+        // Inicializar con texto por defecto
+        lcdInput1.value = "LCD 16x2";
+        lcdInput2.value = "ATmega328P";
+        updateLcdDisplay();
+        
+        // Actualizar al hacer clic en el botón
+        updateLcdBtn.addEventListener('click', updateLcdDisplay);
+        
+        // Actualizar al presionar Enter en los campos de texto
+        lcdInput1.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') updateLcdDisplay();
+        });
+        
+        lcdInput2.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') updateLcdDisplay();
+        });
+    </script>
+</body>
+</html>

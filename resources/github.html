@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Repositorios con GitHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #24292e, #2ea44f, #0366d6);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #2ea44f;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 25px;
+            min-height: 350px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #2ea44f;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #2ea44f;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 18px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #2ea44f;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #22863a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .github-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .github-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .github-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .local-repo, .remote-repo {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 350px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .repo-graphic {
+            width: 250px;
+            height: 150px;
+            background: #2d3e50;
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        
+        .local-repo .repo-graphic {
+            background: #0366d6;
+        }
+        
+        .remote-repo .repo-graphic {
+            background: #2ea44f;
+        }
+        
+        .repo-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        .file-list {
+            text-align: left;
+            margin-top: 15px;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .file-status {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .status-added {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-modified {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-committed {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .workflow-diagram {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .arrow {
+            font-size: 1.5em;
+            margin: 0 10px;
+            color: #6c757d;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .github-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .local-repo, .remote-repo {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gestión de Repositorios con GitHub</h1>
+            <p class="subtitle">Aprende a inicializar, clonar, actualizar y guardar repositorios en GitHub usando Git</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción a Git y GitHub</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es Git?</h3>
+                    <ul>
+                        <li>Sistema de control de versiones distribuido</li>
+                        <li>Desarrollado por Linus Torvalds en 2005</li>
+                        <li>Permite tracking de cambios en proyectos</li>
+                        <li>Facilita la colaboración en equipo</li>
+                    </ul>
+                    
+                    <h3>¿Qué es GitHub?</h3>
+                    <ul>
+                        <li>Plataforma de alojamiento para repositorios Git</li>
+                        <li>Servicio en la nube para proyectos</li>
+                        <li>Funcionalidades sociales y de colaboración</li>
+                        <li>Integración con muchas herramientas</li>
+                    </ul>
+                    
+                    <h3>Flujo de trabajo básico</h3>
+                    <ul>
+                        <li>Working Directory → Staging Area → Repository</li>
+                        <li>git add → git commit → git push</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Git es el sistema, GitHub es la plataforma que lo aloja
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Configuración Inicial</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Instalación de Git</h3>
+                    <ul>
+                        <li>Windows: Descargar desde git-scm.com</li>
+                        <li>macOS: Usar Homebrew (brew install git)</li>
+                        <li>Linux: Usar el gestor de paquetes</li>
+                    </ul>
+                    
+                    <h3>Configuración básica</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Configurar usuario y email</span><br>
+                        git config --global user.name "Tu Nombre"<br>
+                        git config --global user.email "tu.email@ejemplo.com"<br><br>
+                        
+                        <span class="comment"># Configurar editor preferido</span><br>
+                        git config --global core.editor "code --wait"<br><br>
+                        
+                        <span class="comment"># Ver configuración</span><br>
+                        git config --list
+                    </div>
+                    
+                    <h3>Autenticación con GitHub</h3>
+                    <ul>
+                        <li>SSH keys (recomendado)</li>
+                        <li>Personal Access Tokens</li>
+                        <li>Git Credential Manager</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La configuración correcta es esencial para un flujo de trabajo eficiente
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Inicializar un Repositorio</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Crear repositorio local</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Navegar al directorio del proyecto</span><br>
+                        cd mi-proyecto<br><br>
+                        
+                        <span class="comment"># Inicializar repositorio Git</span><br>
+                        git init<br><br>
+                        
+                        <span class="comment"># Ver estado del repositorio</span><br>
+                        git status
+                    </div>
+                    
+                    <h3>Estructura inicial</h3>
+                    <ul>
+                        <li>.git/ - Directorio de control de Git (oculto)</li>
+                        <li>Working directory - Archivos de tu proyecto</li>
+                        <li>Staging area - Área de preparación</li>
+                    </ul>
+                    
+                    <h3>Archivo .gitignore</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Ejemplo de .gitignore</span><br>
+                        node_modules/<br>
+                        *.log<br>
+                        .env<br>
+                        dist/<br>
+                        .DS_Store
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    git init crea un repositorio vacío o reinicializa uno existente
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Clonar un Repositorio</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Desde GitHub</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Clonar con HTTPS</span><br>
+                        git clone https://github.com/usuario/repositorio.git<br><br>
+                        
+                        <span class="comment"># Clonar con SSH</span><br>
+                        git clone git@github.com:usuario/repositorio.git<br><br>
+                        
+                        <span class="comment"># Clonar en directorio específico</span><br>
+                        git clone https://github.com/usuario/repositorio.git mi-carpeta
+                    </div>
+                    
+                    <h3>Desde otras fuentes</h3>
+                    <ul>
+                        <li>GitLab: Similar a GitHub</li>
+                        <li>Bitbucket: Similar a GitHub</li>
+                        <li>Repositorio local: git clone /ruta/al/repositorio</li>
+                    </ul>
+                    
+                    <h3>Después de clonar</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Ver ramas remotas</span><br>
+                        git branch -r<br><br>
+                        
+                        <span class="comment"># Ver información del repositorio</span><br>
+                        git remote -v<br><br>
+                        
+                        <span class="comment"># Ver historial de commits</span><br>
+                        git log --oneline
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    git clone crea una copia local de un repositorio remoto
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Trabajar con Ramas</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Gestión de ramas</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Ver ramas locales</span><br>
+                        git branch<br><br>
+                        
+                        <span class="comment"># Crear nueva rama</span><br>
+                        git branch nueva-rama<br><br>
+                        
+                        <span class="comment"># Cambiar a rama</span><br>
+                        git checkout nueva-rama<br>
+                        <span class="comment"># O con el comando más moderno:</span><br>
+                        git switch nueva-rama<br><br>
+                        
+                        <span class="comment"># Crear y cambiar a rama</span><br>
+                        git checkout -b nueva-rama
+                    </div>
+                    
+                    <h3>Ramas remotas</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Sincronizar ramas remotas</span><br>
+                        git fetch origin<br><br>
+                        
+                        <span class="comment"># Crear rama local desde remota</span><br>
+                        git checkout -b mi-rama origin/mi-rama<br><br>
+                        
+                        <span class="comment"># Publicar rama local en remoto</span><br>
+                        git push -u origin mi-rama
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Las ramas permiten trabajar en características aisladas sin afectar el código principal
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Hacer Commit de Cambios</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Flujo de trabajo básico</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Ver cambios pendientes</span><br>
+                        git status<br><br>
+                        
+                        <span class="comment"># Añadir archivos al staging</span><br>
+                        git add archivo.txt<br>
+                        git add . <span class="comment"># Todos los archivos</span><br>
+                        git add *.js <span class="comment"># Todos los archivos JS</span><br><br>
+                        
+                        <span class="comment"># Hacer commit</span><br>
+                        git commit -m "Mensaje descriptivo del commit"<br><br>
+                        
+                        <span class="comment"># Ver historial</span><br>
+                        git log --oneline
+                    </div>
+                    
+                    <h3>Buenas prácticas para commits</h3>
+                    <ul>
+                        <li>Commits atómicos (un cambio por commit)</li>
+                        <li>Mensajes descriptivos y concisos</li>
+                        <li>Usar el formato imperativo</li>
+                        <li>Referenciar issues o tickets</li>
+                    </ul>
+                    
+                    <h3>Ejemplo de mensaje</h3>
+                    <ul>
+                        <li>feat: añadir funcionalidad de login</li>
+                        <li>fix: corregir error en cálculo de total</li>
+                        <li>docs: actualizar documentación de API</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Un commit es un snapshot de los cambios en un punto específico del tiempo
+                </div>
+            </div>
+            
+            <!-- Presentación 7 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Sincronizar con Remoto</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Subir cambios (Push)</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Subir cambios al remoto</span><br>
+                        git push origin main<br><br>
+                        
+                        <span class="comment"># Subir rama específica</span><br>
+                        git push origin mi-rama<br><br>
+                        
+                        <span class="comment"># Subir y establecer upstream</span><br>
+                        git push -u origin mi-rama<br><br>
+                        
+                        <span class="comment"># Forzar push (usar con cuidado)</span><br>
+                        git push -f origin main
+                    </div>
+                    
+                    <h3>Traer cambios (Pull)</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Descargar cambios del remoto</span><br>
+                        git pull origin main<br><br>
+                        
+                        <span class="comment"># Equivalente a:</span><br>
+                        git fetch origin<br>
+                        git merge origin/main
+                    </div>
+                    
+                    <h3>Resolver conflictos</h3>
+                    <ul>
+                        <li>Git marca los archivos con conflictos</li>
+                        <li>Editar manualmente los archivos conflictivos</li>
+                        <li>Marcar como resuelto: git add archivo</li>
+                        <li>Completar merge: git commit</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    git push sube tus commits locales, git pull trae commits remotos
+                </div>
+            </div>
+            
+            <!-- Presentación 8 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Trabajar con Issues y PRs</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>GitHub Issues</h3>
+                    <ul>
+                        <li>Reportar bugs o errores</li>
+                        <li>Sugerir nuevas características</li>
+                        <li>Gestionar tareas del proyecto</li>
+                        <li>Asignar responsables</li>
+                    </ul>
+                    
+                    <h3>Pull Requests</h3>
+                    <ul>
+                        <li>Proponer cambios al código</li>
+                        <li>Revisión de código por pares</li>
+                        <li>Integración continua</li>
+                        <li>Discusión de implementación</li>
+                    </ul>
+                    
+                    <h3>Flujo de trabajo típico</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Crear rama para issue</span><br>
+                        git checkout -b fix/issue-123<br><br>
+                        
+                        <span class="comment"># Hacer cambios y commits</span><br>
+                        git add .<br>
+                        git commit -m "fix: resolver issue #123"<br><br>
+                        
+                        <span class="comment"># Subir rama</span><br>
+                        git push -u origin fix/issue-123<br><br>
+                        
+                        <span class="comment"># Crear PR en GitHub</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Los Issues y PRs facilitan la colaboración y el control de calidad
+                </div>
+            </div>
+            
+            <!-- Presentación 9 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Comandos Avanzados Útiles</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Historial y cambios</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Ver cambios en archivos</span><br>
+                        git diff<br><br>
+                        
+                        <span class="comment"># Ver historial gráfico</span><br>
+                        git log --oneline --graph --all<br><br>
+                        
+                        <span class="comment"># Ver cambios de un commit</span><br>
+                        git show abc1234
+                    </div>
+                    
+                    <h3>Gestión de cambios</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Deshacer cambios en archivo</span><br>
+                        git checkout -- archivo.txt<br><br>
+                        
+                        <span class="comment"># Quitar archivos del staging</span><br>
+                        git reset HEAD archivo.txt<br><br>
+                        
+                        <span class="comment"># Modificar último commit</span><br>
+                        git commit --amend
+                    </div>
+                    
+                    <h3>Stashing</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment"># Guardar cambios temporales</span><br>
+                        git stash<br><br>
+                        
+                        <span class="comment"># Ver stashes guardados</span><br>
+                        git stash list<br><br>
+                        
+                        <span class="comment"># Aplicar último stash</span><br>
+                        git stash apply<br><br>
+                        
+                        <span class="comment"># Aplicar stash específico</span><br>
+                        git stash apply stash@{1}
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Estos comandos avanzados mejoran tu eficiencia con Git
+                </div>
+            </div>
+        </div>
+        
+        <div class="github-demo">
+            <h2>Simulador de Flujo de Trabajo Git</h2>
+            <p>Practica el flujo básico de trabajo con Git y GitHub:</p>
+            
+            <div class="github-visualization">
+                <div class="local-repo">
+                    <h3>Repositorio Local</h3>
+                    <div class="repo-graphic">
+                        <div class="repo-icon"><i class="fab fa-git"></i></div>
+                        <div>mi-proyecto</div>
+                    </div>
+                    
+                    <div class="file-list">
+                        <div class="file-item">
+                            <span>index.html</span>
+                            <span class="file-status status-modified">modificado</span>
+                        </div>
+                        <div class="file-item">
+                            <span>styles.css</span>
+                            <span class="file-status status-added">nuevo</span>
+                        </div>
+                        <div class="file-item">
+                            <span>script.js</span>
+                            <span class="file-status status-committed">commit</span>
+                        </div>
+                    </div>
+                    
+                    <div class="workflow-diagram">
+                        <span>Working Directory</span> <span class="arrow">→</span> 
+                        <span>git add</span> <span class="arrow">→</span> 
+                        <span>Staging Area</span> <span class="arrow">→</span> 
+                        <span>git commit</span> <span class="arrow">→</span> 
+                        <span>Local Repository</span>
+                    </div>
+                </div>
+                
+                <div class="remote-repo">
+                    <h3>Repositorio Remoto (GitHub)</h3>
+                    <div class="repo-graphic">
+                        <div class="repo-icon"><i class="fab fa-github"></i></div>
+                        <div>usuario/mi-proyecto</div>
+                    </div>
+                    
+                    <div class="file-list">
+                        <div class="file-item">
+                            <span>README.md</span>
+                            <span class="file-status status-committed">✓</span>
+                        </div>
+                        <div class="file-item">
+                            <span>index.html</span>
+                            <span class="file-status status-committed">✓</span>
+                        </div>
+                        <div class="file-item">
+                            <span>script.js</span>
+                            <span class="file-status status-committed">✓</span>
+                        </div>
+                    </div>
+                    
+                    <div class="workflow-diagram">
+                        <span>Local Repository</span> <span class="arrow">→</span> 
+                        <span>git push</span> <span class="arrow">→</span> 
+                        <span>Remote Repository</span> <span class="arrow">→</span> 
+                        <span>git pull</span> <span class="arrow">→</span> 
+                        <span>Local Repository</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn" id="git-add-btn">
+                    <i class="fas fa-plus"></i> git add
+                </button>
+                <button class="btn" id="git-commit-btn">
+                    <i class="fas fa-code-commit"></i> git commit
+                </button>
+                <button class="btn" id="git-push-btn">
+                    <i class="fas fa-cloud-upload-alt"></i> git push
+                </button>
+                <button class="btn" id="git-pull-btn">
+                    <i class="fas fa-cloud-download-alt"></i> git pull
+                </button>
+                <button class="btn" id="reset-btn">
+                    <i class="fas fa-redo"></i> Reiniciar
+                </button>
+            </div>
+            
+            <div class="workflow-diagram" style="margin-top: 20px; background: #f8f9fa; color: #333;">
+                <div id="command-output">> Esperando acción...</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Guía de Comandos
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de flujo de trabajo Git
+        document.addEventListener('DOMContentLoaded', function() {
+            const gitAddBtn = document.getElementById('git-add-btn');
+            const gitCommitBtn = document.getElementById('git-commit-btn');
+            const gitPushBtn = document.getElementById('git-push-btn');
+            const gitPullBtn = document.getElementById('git-pull-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const commandOutput = document.getElementById('command-output');
+            
+            // Estado inicial de los archivos
+            const fileStates = {
+                'index.html': 'modified',
+                'styles.css': 'added', 
+                'script.js': 'committed'
+            };
+            
+            const remoteFiles = {
+                'README.md': 'committed',
+                'index.html': 'committed',
+                'script.js': 'committed'
+            };
+            
+            // Actualizar visualización de archivos
+            function updateFileDisplay() {
+                const fileItems = document.querySelectorAll('.local-repo .file-item');
+                fileItems.forEach(item => {
+                    const fileName = item.querySelector('span:first-child').textContent;
+                    const statusElement = item.querySelector('.file-status');
+                    
+                    // Reset classes
+                    statusElement.classList.remove('status-added', 'status-modified', 'status-committed');
+                    
+                    // Add appropriate class
+                    if (fileStates[fileName] === 'added') {
+                        statusElement.classList.add('status-added');
+                        statusElement.textContent = 'staged';
+                    } else if (fileStates[fileName] === 'modified') {
+                        statusElement.classList.add('status-modified');
+                        statusElement.textContent = 'modificado';
+                    } else if (fileStates[fileName] === 'committed') {
+                        statusElement.classList.add('status-committed');
+                        statusElement.textContent = 'commit';
+                    }
+                });
+            }
+            
+            // Inicializar visualización
+            updateFileDisplay();
+            
+            // Configurar eventos para los botones
+            gitAddBtn.addEventListener('click', function() {
+                fileStates['index.html'] = 'added';
+                fileStates['styles.css'] = 'added';
+                commandOutput.textContent = '> git add . : Archivos añadidos al área de staging';
+                updateFileDisplay();
+            });
+            
+            gitCommitBtn.addEventListener('click', function() {
+                if (fileStates['index.html'] === 'added' || fileStates['styles.css'] === 'added') {
+                    fileStates['index.html'] = 'committed';
+                    fileStates['styles.css'] = 'committed';
+                    commandOutput.textContent = '> git commit -m "Actualizar archivos" : Cambios confirmados localmente';
+                    updateFileDisplay();
+                } else {
+                    commandOutput.textContent = '> Error: No hay cambios en staging para commit';
+                }
+            });
+            
+            gitPushBtn.addEventListener('click', function() {
+                if (fileStates['index.html'] === 'committed' || fileStates['styles.css'] === 'committed') {
+                    remoteFiles['index.html'] = 'committed';
+                    commandOutput.textContent = '> git push origin main : Cambios subidos a GitHub';
+                    
+                    // Simular que los archivos están ahora en el remoto
+                    fileStates['index.html'] = 'committed';
+                    fileStates['styles.css'] = 'committed';
+                    updateFileDisplay();
+                } else {
+                    commandOutput.textContent = '> Error: No hay commits nuevos para subir';
+                }
+            });
+            
+            gitPullBtn.addEventListener('click', function() {
+                commandOutput.textContent = '> git pull origin main : Cambios actualizados desde GitHub';
+                
+                // Simular que hemos traído cambios
+                fileStates['script.js'] = 'committed';
+                updateFileDisplay();
+            });
+            
+            resetBtn.addEventListener('click', function() {
+                // Restablecer estado inicial
+                fileStates['index.html'] = 'modified';
+                fileStates['styles.css'] = 'added';
+                fileStates['script.js'] = 'committed';
+                
+                commandOutput.textContent = '> Estado reiniciado : Puedes practicar de nuevo';
+                updateFileDisplay();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunicación UART en ATmega328P</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.4em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 20px;
+            min-height: 320px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            font-size: 1.2em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 10px;
+            padding-left: 22px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.3em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.9em;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .register {
+            color: #66d9ef;
+        }
+        
+        .directive {
+            color: #a6e22e;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .uart-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .uart-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .uart-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .uart-diagram, .uart-config {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 350px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .uart-graphic {
+            width: 280px;
+            height: 200px;
+            background: #2c3e50;
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        
+        .signal-wave {
+            width: 90%;
+            height: 60px;
+            background: #1e272e;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .waveform {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 8px,
+                #3498db 8px,
+                #3498db 10px
+            );
+            animation: waveMove 3s linear infinite;
+        }
+        
+        @keyframes waveMove {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-10px); }
+        }
+        
+        .pin-connection {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        
+        .pin {
+            width: 40px;
+            height: 40px;
+            background: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .connection-line {
+            flex-grow: 1;
+            height: 2px;
+            background: #3498db;
+            margin: 0 10px;
+            align-self: center;
+        }
+        
+        .register-config {
+            text-align: left;
+            margin-top: 15px;
+        }
+        
+        .register-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .operation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .operation-log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .baud-selector {
+            margin: 15px 0;
+        }
+        
+        .baud-option {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background: #e9ecef;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .baud-option.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .uart-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .uart-diagram, .uart-config {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Comunicación UART en ATmega328P</h1>
+            <p class="subtitle">Aprende a utilizar el módulo UART del ATmega328P programado en ensamblador para comunicación serial</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción a UART</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es UART?</h3>
+                    <ul>
+                        <li>Universal Asynchronous Receiver/Transmitter</li>
+                        <li>Protocolo de comunicación serial asíncrono</li>
+                        <li>Comunicación punto a punto full-duplex</li>
+                        <li>No requiere reloj compartido</li>
+                        <li>Usa 2 cables: TX (transmisión) y RX (recepción)</li>
+                    </ul>
+                    
+                    <h3>Características en ATmega328P</h3>
+                    <ul>
+                        <li>Módulo USART (Universal Synchronous/Asynchronous Receiver/Transmitter)</li>
+                        <li>Soporta comunicación asíncrona y síncrona</li>
+                        <li>Baud rates desde 2400 hasta 2Mbps (a 16MHz)</li>
+                        <li>Registros separados para recepción y transmisión</li>
+                        <li>Interrupciones para recepción y transmisión</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    UART es uno de los protocolos de comunicación más antiguos y ampliamente utilizados
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Registros UART del ATmega328P</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Registros Principales</h3>
+                    <ul>
+                        <li>UDR0 (USART Data Register): Datos de entrada/salida</li>
+                        <li>UCSR0A (USART Control and Status Register A): Estado y control</li>
+                        <li>UCSR0B (USART Control and Status Register B): Interrupciones y habilitación</li>
+                        <li>UCSR0C (USART Control and Status Register C): Formato</li>
+                        <li>UBRR0L y UBRR0H (USART Baud Rate Registers): Velocidad</li>
+                    </ul>
+                    
+                    <h3>Bits Importantes</h3>
+                    <ul>
+                        <li>RXEN0: Habilitar recepción</li>
+                        <li>TXEN0: Habilitar transmisión</li>
+                        <li>RXCIE0: Habilitar interrupción por recepción</li>
+                        <li>TXCIE0: Habilitar interrupción por transmisión</li>
+                        <li>UDRE0: Buffer de datos vacío (listo para transmitir)</li>
+                        <li>RXC0: Recepción completada</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La correcta configuración de los registros es esencial para el funcionamiento del UART
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Configuración de Baud Rate</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Cálculo de Baud Rate</h3>
+                    <ul>
+                        <li>Fórmula: UBRR = (F_CPU / (16 * BAUD)) - 1</li>
+                        <li>Para 16MHz y 9600 baud: UBRR = (16000000 / (16 * 9600)) - 1 = 103</li>
+                        <li>Para 16MHz y 115200 baud: UBRR = (16000000 / (16 * 115200)) - 1 = 8</li>
+                        <li>El registro UBRR0 es de 16 bits (UBRR0H y UBRR0L)</li>
+                    </ul>
+                    
+                    <h3>Configuración en Ensamblador</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar para 9600 baudios a 16MHz</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="directive">HIGH</span>(103)  <span class="comment">; 103 = (16000000/(16*9600))-1</span><br>
+                        <span class="keyword">sts</span> <span class="register">UBRR0H</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="directive">LOW</span>(103)<br>
+                        <span class="keyword">sts</span> <span class="register">UBRR0L</span>, <span class="register">r16</span>
+                    </div>
+                    
+                    <h3>Baud Rates Comunes</h3>
+                    <ul>
+                        <li>2400, 4800, 9600, 19200, 38400</li>
+                        <li>57600, 115200 (máxima velocidad estable)</li>
+                        <li>250000, 500000 (requieren cristal preciso)</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La velocidad de comunicación debe coincidir en ambos dispositivos
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Configuración de Formato</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Opciones de Formato</h3>
+                    <ul>
+                        <li>Bits de datos: 5, 6, 7, 8 o 9 bits</li>
+                        <li>Bits de parada: 1 o 2 bits</li>
+                        <li>Paridad: Ninguna, par o impar</li>
+                        <li>Modo de operación: Asíncrono o síncrono</li>
+                    </ul>
+                    
+                    <h3>Configuración de UCSR0C</h3>
+                    <ul>
+                        <li>UMSEL01:0: Modo (00=Asíncrono, 01=Síncrono)</li>
+                        <li>UPM01:0: Paridad (00=Ninguna, 10=Par, 11=Impar)</li>
+                        <li>USBS0: Bits de parada (0=1bit, 1=2bits)</li>
+                        <li>UCSZ01:0: Tamaño de datos (11=8bits con UCSZ02)</li>
+                        <li>UCSZ02: Bit adicional para 9 bits (en UCSR0B)</li>
+                    </ul>
+                    
+                    <h3>Ejemplo de Configuración</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar para 8 bits de datos, 1 bit de parada, sin paridad</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;UCSZ01)|(1&lt;&lt;UCSZ00)  <span class="comment">; 8 bits</span><br>
+                        <span class="keyword">sts</span> <span class="register">UCSR0C</span>, <span class="register">r16</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El formato 8N1 (8 bits, no paridad, 1 bit de parada) es el más común
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Inicialización Completa del UART</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Secuencia de Inicialización</h3>
+                    <ol>
+                        <li>Configurar baud rate (UBRR0H y UBRR0L)</li>
+                        <li>Configurar formato (UCSR0C)</li>
+                        <li>Habilitar transmisor y/o receptor (UCSR0B)</li>
+                        <li>Opcional: Habilitar interrupciones</li>
+                    </ol>
+                    
+                    <h3>Función de Inicialización</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Inicializar UART para 9600 8N1</span><br>
+                        <span class="label">uart_init:</span><br>
+                        <span class="comment">; Configurar baud rate (9600 a 16MHz)</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="directive">HIGH</span>(103)<br>
+                        <span class="keyword">sts</span> <span class="register">UBRR0H</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="directive">LOW</span>(103)<br>
+                        <span class="keyword">sts</span> <span class="register">UBRR0L</span>, <span class="register">r16</span><br>
+                        <span class="comment">; Configurar formato (8 bits, 1 stop, sin paridad)</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;UCSZ01)|(1&lt;&lt;UCSZ00)<br>
+                        <span class="keyword">sts</span> <span class="register">UCSR0C</span>, <span class="register">r16</span><br>
+                        <span class="comment">; Habilitar transmisor y receptor</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;RXEN0)|(1&lt;&lt;TXEN0)<br>
+                        <span class="keyword">sts</span> <span class="register">UCSR0B</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ret</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La inicialización debe realizarse antes de cualquier operación de comunicación
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Transmisión de Datos</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Transmisión por Polling</h3>
+                    <ul>
+                        <li>Esperar a que el buffer de transmisión esté vacío (UDRE0)</li>
+                        <li>Escribir dato en UDR0</li>
+                        <li>El hardware se encarga de la transmisión serial</li>
+                    </ul>
+                    
+                    <h3>Función de Transmisión</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Transmitir carácter por UART (polling)</span><br>
+                        <span class="comment">; Entrada: r16 - carácter a transmitir</span><br>
+                        <span class="label">uart_tx:</span><br>
+                        <span class="comment">; Esperar a que el buffer de transmisión esté vacío</span><br>
+                        <span class="label">uart_tx_wait:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">lds</span> <span class="register">r17</span>, <span class="register">UCSR0A</span><br>
+                        &nbsp;&nbsp;<span class="keyword">sbrs</span> <span class="register">r17</span>, <span class="register">UDRE0</span>  <span class="comment">; Saltar si UDRE0 está set</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rjmp</span> <span class="label">uart_tx_wait</span><br>
+                        <span class="comment">; Escribir dato en buffer de transmisión</span><br>
+                        &nbsp;&nbsp;<span class="keyword">sts</span> <span class="register">UDR0</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="keyword">ret</span>
+                    </div>
+                    
+                    <h3>Transmisión por Interrupciones</h3>
+                    <ul>
+                        <li>Habilitar interrupción UDRE0 (buffer vacío)</li>
+                        <li>Escribir handler de interrupción</li>
+                        <li>Más eficiente pero más complejo</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La transmisión por polling es simple pero bloqueante
+                </div>
+            </div>
+            
+            <!-- Presentación 7 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Recepción de Datos</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Recepción por Polling</h3>
+                    <ul>
+                        <li>Esperar a que se reciba un dato (RXC0)</li>
+                        <li>Leer dato de UDR0</li>
+                        <li>Procesar el dato recibido</li>
+                    </ul>
+                    
+                    <h3>Función de Recepción</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Recibir carácter por UART (polling)</span><br>
+                        <span class="comment">; Salida: r16 - carácter recibido</span><br>
+                        <span class="label">uart_rx:</span><br>
+                        <span class="comment">; Esperar a que se reciba un dato</span><br>
+                        <span class="label">uart_rx_wait:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">lds</span> <span class="register">r17</span>, <span class="register">UCSR0A</span><br>
+                        &nbsp;&nbsp;<span class="keyword">sbrs</span> <span class="register">r17</span>, <span class="register">RXC0</span>  <span class="comment">; Saltar si RXC0 está set</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rjmp</span> <span class="label">uart_rx_wait</span><br>
+                        <span class="comment">; Leer dato recibido</span><br>
+                        &nbsp;&nbsp;<span class="keyword">lds</span> <span class="register">r16</span>, <span class="register">UDR0</span><br>
+                        &nbsp;&nbsp;<span class="keyword">ret</span>
+                    </div>
+                    
+                    <h3>Recepción por Interrupciones</h3>
+                    <ul>
+                        <li>Habilitar interrupción RXC0 (dato recibido)</li>
+                        <li>Escribir handler de interrupción</li>
+                        <li>Permite procesamiento no bloqueante</li>
+                    </ul>
+                    
+                    <h3>Handler de Interrupción</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Handler de interrupción por recepción</span><br>
+                        <span class="label">USART_RX_vect:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">push</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="keyword">in</span> <span class="register">r16</span>, <span class="register">SREG</span><br>
+                        &nbsp;&nbsp;<span class="keyword">push</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="keyword">lds</span> <span class="register">r16</span>, <span class="register">UDR0</span>  <span class="comment">; Leer dato recibido</span><br>
+                        &nbsp;&nbsp;<span class="comment">; Procesar dato (almacenar en buffer, etc.)</span><br>
+                        &nbsp;&nbsp;<span class="keyword">pop</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="keyword">out</span> <span class="register">SREG</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="keyword">pop</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="keyword">reti</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La recepción por interrupciones es más eficiente para aplicaciones en tiempo real
+                </div>
+            </div>
+            
+            <!-- Presentación 8 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Transmisión de Cadenas</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Transmisión de Mensajes</h3>
+                    <ul>
+                        <li>Transmitir caracteres individualmente en un bucle</li>
+                        <li>Usar tablas de strings en memoria de programa</li>
+                        <li>Terminar strings con carácter nulo (0x00)</li>
+                        <li>Incluir caracteres especiales (CR, LF)</li>
+                    </ul>
+                    
+                    <h3>Función de Transmisión de String</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Transmitir string desde memoria de programa</span><br>
+                        <span class="comment">; Entrada: Z - apuntador al string (terminado en 0)</span><br>
+                        <span class="label">uart_print:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">lpm</span> <span class="register">r16</span>, <span class="register">Z</span>+  <span class="comment">; Cargar carácter desde flash</span><br>
+                        &nbsp;&nbsp;<span class="keyword">cpi</span> <span class="register">r16</span>, 0    <span class="comment">; ¿Es el terminador nulo?</span><br>
+                        &nbsp;&nbsp;<span class="keyword">breq</span> <span class="label">uart_print_end</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">uart_tx</span>  <span class="comment">; Transmitir carácter</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rjmp</span> <span class="label">uart_print</span><br>
+                        <span class="label">uart_print_end:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">ret</span><br><br>
+                        
+                        <span class="comment">; String en memoria de programa</span><br>
+                        <span class="label">mensaje:</span> <span class="directive">.db</span> "Hola UART!", 0x0D, 0x0A, 0<br>
+                        <span class="comment">; Uso:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">ldi</span> <span class="register">ZL</span>, <span class="directive">LOW</span>(mensaje&lt;&lt;1)<br>
+                        &nbsp;&nbsp;<span class="keyword">ldi</span> <span class="register">ZH</span>, <span class="directive">HIGH</span>(mensaje&lt;&lt;1)<br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">uart_print</span>
+                    </div>
+                    
+                    <h3>Caracteres Especiales</h3>
+                    <ul>
+                        <li>CR (Carriage Return): 0x0D</li>
+                        <li>LF (Line Feed): 0x0A</li>
+                        <li>CR+LF: Estándar para nueva línea</li>
+                        <li>NULL: 0x00 (terminador de string)</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La transmisión de strings completos es útil para mensajes de depuración
+                </div>
+            </div>
+            
+            <!-- Presentación 9 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Ejemplo Completo: Eco por UART</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Programa de Eco</h3>
+                    <ul>
+                        <li>Lee caracteres recibidos por UART</li>
+                        <li>Los retransmite inmediatamente</li>
+                        <li>Útil para probar la comunicación</li>
+                        <li>Demo clásica de funcionamiento UART</li>
+                    </ul>
+                    
+                    <h3>Código Completo</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Programa de eco por UART</span><br>
+                        <span class="directive">.include</span> "m328Pdef.inc"<br><br>
+                        
+                        <span class="comment">; Punto de entrada</span><br>
+                        <span class="label">main:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">uart_init</span>  <span class="comment">; Inicializar UART</span><br>
+                        &nbsp;&nbsp;<span class="keyword">ldi</span> <span class="register">ZL</span>, <span class="directive">LOW</span>(mensaje_inicio&lt;&lt;1)<br>
+                        &nbsp;&nbsp;<span class="keyword">ldi</span> <span class="register">ZH</span>, <span class="directive">HIGH</span>(mensaje_inicio&lt;&lt;1)<br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">uart_print</span>  <span class="comment">; Mensaje inicial</span><br>
+                        <span class="label">loop:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">uart_rx</span>    <span class="comment">; Leer carácter</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">uart_tx</span>    <span class="comment">; Transmitir carácter (eco)</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rjmp</span> <span class="label">loop</span>       <span class="comment">; Repetir</span><br><br>
+                        
+                        <span class="comment">; Mensaje inicial</span><br>
+                        <span class="label">mensaje_inicio:</span> <span class="directive">.db</span> "Eco UART activo", 0x0D, 0x0A, 0
+                    </div>
+                    
+                    <h3>Funciones de Inicialización</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; (Aquí irían las funciones uart_init, uart_tx, uart_rx, uart_print)</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El programa de eco es el "Hola Mundo" de la comunicación UART
+                </div>
+            </div>
+            
+            <!-- Presentación 10 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Depuración y Solución de Problemas</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Problemas Comunes</h3>
+                    <ul>
+                        <li>Baud rate incorrecto</li>
+                        <li>Configuración de formato no coincidente</li>
+                        <li>Conexión TX-RX cruzada incorrectamente</li>
+                        <li>Niveles de voltaje incorrectos (5V vs 3.3V)</li>
+                        <li>Problemas de timing con cristal no preciso</li>
+                    </ul>
+                    
+                    <h3>Técnicas de Depuración</h3>
+                    <ul>
+                        <li>Usar LED para indicar actividad</li>
+                        <li>Transmitir mensajes de estado</li>
+                        <li>Verificar registros con debugger</li>
+                        <li>Probar con diferentes baud rates</li>
+                        <li>Usar osciloscopio para verificar señal</li>
+                    </ul>
+                    
+                    <h3>Verificación de Configuración</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Función para verificar configuración UART</span><br>
+                        <span class="label">uart_check_config:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">lds</span> <span class="register">r16</span>, <span class="register">UCSR0B</span><br>
+                        &nbsp;&nbsp;<span class="keyword">sbrs</span> <span class="register">r16</span>, <span class="register">RXEN0</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">error_rx_disabled</span><br>
+                        &nbsp;&nbsp;<span class="keyword">sbrs</span> <span class="register">r16</span>, <span class="register">TXEN0</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">error_tx_disabled</span><br>
+                        &nbsp;&nbsp;<span class="keyword">ret</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Una buena estrategia de depuración ahorra tiempo en el desarrollo
+                </div>
+            </div>
+        </div>
+        
+        <div class="uart-demo">
+            <h2>Simulador de Comunicación UART</h2>
+            
+            <div class="uart-visualization">
+                <div class="uart-diagram">
+                    <h3>Conexión UART</h3>
+                    <div class="pin-connection">
+                        <div class="pin">TX</div>
+                        <div class="connection-line"></div>
+                        <div class="pin">RX</div>
+                    </div>
+                    <div class="pin-connection">
+                        <div class="pin">RX</div>
+                        <div class="connection-line"></div>
+                        <div class="pin">TX</div>
+                    </div>
+                    <div class="pin-connection">
+                        <div class="pin">GND</div>
+                        <div class="connection-line"></div>
+                        <div class="pin">GND</div>
+                    </div>
+                    <div class="uart-graphic">
+                        <h4>Señal UART</h4>
+                        <div class="signal-wave">
+                            <div class="waveform"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="uart-config">
+                    <h3>Configuración</h3>
+                    <div class="baud-selector">
+                        <p>Velocidad (Baud Rate):</p>
+                        <div class="baud-option active">9600</div>
+                        <div class="baud-option">19200</div>
+                        <div class="baud-option">38400</div>
+                        <div class="baud-option">115200</div>
+                    </div>
+                    
+                    <div class="register-config">
+                        <h4>Registros UART</h4>
+                        <div class="register-item">
+                            <span>UCSR0A:</span>
+                            <span>0b10000000</span>
+                        </div>
+                        <div class="register-item">
+                            <span>UCSR0B:</span>
+                            <span>0b00011000</span>
+                        </div>
+                        <div class="register-item">
+                            <span>UCSR0C:</span>
+                            <span>0b00000110</span>
+                        </div>
+                        <div class="register-item">
+                            <span>UBRR0:</span>
+                            <span>103 (0x0067)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="operation-buttons">
+                        <button class="btn" onclick="transmitData()">Transmitir</button>
+                        <button class="btn" onclick="receiveData()">Recibir</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="operation-log" id="uart-log">
+                > Sistema UART inicializado<br>
+                > Baud rate: 9600<br>
+                > Formato: 8N1<br>
+                > Esperando datos...
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="#" class="btn" onclick="downloadFile()">
+                <i class="fas fa-download"></i> Descargar Presentación Completa
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function transmitData() {
+            const log = document.getElementById('uart-log');
+            log.innerHTML += '<br>> Transmitiendo: "Hola UART!"';
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function receiveData() {
+            const log = document.getElementById('uart-log');
+            log.innerHTML += '<br>> Dato recibido: "A"';
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function downloadFile() {
+            const content = document.documentElement.outerHTML;
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'presentacion_uart_atmega328p.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Configurar eventos para los botones de baud rate
+        document.querySelectorAll('.baud-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.baud-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                const log = document.getElementById('uart-log');
+                log.innerHTML += `<br>> Baud rate cambiado a: ${this.textContent}`;
+                log.scrollTop = log.scrollHeight;
+            });
+        });
+    </script>
+</body>
+</html>

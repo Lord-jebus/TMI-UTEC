@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunicación SPI en ATmega328P con AVR-GCC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c2461, #1e3799, #4a69bd);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 25px;
+            min-height: 350px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 18px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .spi-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .spi-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .spi-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .master, .slave {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 250px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .pin {
+            margin: 10px 0;
+            padding: 8px;
+            background: #e9ecef;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .pin-name {
+            font-weight: bold;
+        }
+        
+        .pin-value {
+            font-family: 'Courier New', monospace;
+        }
+        
+        .connection {
+            stroke: #3498db;
+            stroke-width: 2;
+        }
+        
+        .data-transfer {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .spi-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .master, .slave {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Comunicación SPI en ATmega328P con AVR-GCC</h1>
+            <p class="subtitle">Aprende a utilizar el protocolo SPI (Serial Peripheral Interface) con el microcontrolador ATmega328P programado en C usando AVR-GCC</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción a SPI</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es SPI?</h3>
+                    <ul>
+                        <li>Serial Peripheral Interface (Interfaz Periférica Serial)</li>
+                        <li>Protocolo de comunicación síncrono</li>
+                        <li>Comunicación full-duplex (transmisión y recepción simultánea)</li>
+                        <li>Protocolo maestro-esclavo</li>
+                    </ul>
+                    
+                    <h3>Características principales</h3>
+                    <ul>
+                        <li>Alta velocidad (hasta varios MHz)</li>
+                        <li>4 líneas de señal (MOSI, MISO, SCK, SS)</li>
+                        <li>Comunicación punto a punto o con múltiples esclavos</li>
+                        <li>Simple y eficiente</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    SPI es ampliamente usado para comunicar con memorias, sensores, displays, etc.
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Pines y Registros SPI</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Pines SPI en ATmega328P</h3>
+                    <ul>
+                        <li>MOSI (PB3) - Master Out Slave In</li>
+                        <li>MISO (PB4) - Master In Slave Out</li>
+                        <li>SCK (PB5) - Serial Clock</li>
+                        <li>SS (PB2) - Slave Select (opcional)</li>
+                    </ul>
+                    
+                    <h3>Registros importantes</h3>
+                    <ul>
+                        <li>SPCR - SPI Control Register</li>
+                        <li>SPSR - SPI Status Register</li>
+                        <li>SPDR - SPI Data Register</li>
+                        <li>DDRB - Data Direction Register B (para configurar pines)</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los registros controlan la configuración y operación del módulo SPI
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Configuración SPI Maestro</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Inicialización como maestro</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Configurar SPI como maestro</span><br>
+                        <span class="keyword">void</span> <span class="function">spi_master_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar MOSI, SCK y SS como salidas</span><br>
+                        &nbsp;&nbsp;DDRB |= (1 &lt;&lt; DDB3) | (1 &lt;&lt; DDB5) | (1 &lt;&lt; DDB2);<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar MISO como entrada</span><br>
+                        &nbsp;&nbsp;DDRB &amp;= ~(1 &lt;&lt; DDB4);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Habilitar SPI, modo maestro, clock f/16</span><br>
+                        &nbsp;&nbsp;SPCR = (1 &lt;&lt; SPE) | (1 &lt;&lt; MSTR) | (1 &lt;&lt; SPR0);<br>
+                        }
+                    </div>
+                    
+                    <h3>Opciones de configuración</h3>
+                    <ul>
+                        <li>Velocidad de reloj (prescaler)</li>
+                        <li>Orden de los bits (LSB o MSB primero)</li>
+                        <li>Modo de reloj (fase y polaridad)</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    SPCR: SPI Control Register - configura el modo de operación
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Configuración SPI Esclavo</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Inicialización como esclavo</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Configurar SPI como esclavo</span><br>
+                        <span class="keyword">void</span> <span class="function">spi_slave_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar MISO como salida</span><br>
+                        &nbsp;&nbsp;DDRB |= (1 &lt;&lt; DDB4);<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar MOSI, SCK y SS como entradas</span><br>
+                        &nbsp;&nbsp;DDRB &amp;= ~((1 &lt;&lt; DDB3) | (1 &lt;&lt; DDB5) | (1 &lt;&lt; DDB2));<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Habilitar SPI</span><br>
+                        &nbsp;&nbsp;SPCR = (1 &lt;&lt; SPE);<br>
+                        }
+                    </div>
+                    
+                    <h3>Función de recepción en esclavo</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Recibir dato en modo esclavo</span><br>
+                        <span class="keyword">uint8_t</span> <span class="function">spi_slave_receive</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Esperar a que se complete la recepción</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (!(SPSR &amp; (1 &lt;&lt; SPIF)));<br>
+                        &nbsp;&nbsp;<span class="comment">// Devolver dato recibido</span><br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> SPDR;<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    En modo esclavo, el reloj es generado por el maestro
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Función de Transmisión</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Transmisión y recepción de datos</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Transferir un byte (maestro)</span><br>
+                        <span class="keyword">uint8_t</span> <span class="function">spi_transfer</span>(<span class="keyword">uint8_t</span> data) {<br>
+                        &nbsp;&nbsp;<span class="comment">// Iniciar transferencia escribiendo en SPDR</span><br>
+                        &nbsp;&nbsp;SPDR = data;<br>
+                        &nbsp;&nbsp;<span class="comment">// Esperar a que se complete la transferencia</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (!(SPSR &amp; (1 &lt;&lt; SPIF)));<br>
+                        &nbsp;&nbsp;<span class="comment">// Devolver dato recibido</span><br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> SPDR;<br>
+                        }
+                    </div>
+                    
+                    <h3>Transferencia de múltiples bytes</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Transferir array de datos</span><br>
+                        <span class="keyword">void</span> <span class="function">spi_transfer_array</span>(<span class="keyword">uint8_t</span> *tx_data, <span class="keyword">uint8_t</span> *rx_data, <span class="keyword">uint8_t</span> len) {<br>
+                        &nbsp;&nbsp;<span class="keyword">for</span> (<span class="keyword">uint8_t</span> i = 0; i < len; i++) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;rx_data[i] = spi_transfer(tx_data[i]);<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    SPI es full-duplex: se transmite y recibe simultáneamente
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Ejemplo Completo</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Comunicación con periférico SPI</h3>
+                    
+                    <div class="code-block">
+                        <span class="keyword">#include</span> &lt;avr/io.h&gt;<br>
+                        <span class="keyword">#include</span> &lt;util/delay.h&gt;<br><br>
+                        
+                        <span class="comment">// Inicializar SPI como maestro</span><br>
+                        <span class="keyword">void</span> <span class="function">spi_init</span>() {<br>
+                        &nbsp;&nbsp;DDRB |= (1 &lt;&lt; DDB3) | (1 &lt;&lt; DDB5) | (1 &lt;&lt; DDB2);<br>
+                        &nbsp;&nbsp;SPCR = (1 &lt;&lt; SPE) | (1 &lt;&lt; MSTR) | (1 &lt;&lt; SPR0);<br>
+                        }<br><br>
+                        
+                        <span class="comment">// Función principal</span><br>
+                        <span class="keyword">int</span> <span class="function">main</span>(<span class="keyword">void</span>) {<br>
+                        &nbsp;&nbsp;spi_init();<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> counter = 0;<br><br>
+                        
+                        &nbsp;&nbsp;<span class="keyword">while</span> (1) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Seleccionar esclavo (activar SS en bajo)</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;PORTB &amp;= ~(1 &lt;&lt; PORTB2);<br><br>
+                        
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Transferir dato</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;SPDR = counter++;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">while</span> (!(SPSR &amp; (1 &lt;&lt; SPIF)));<br><br>
+                        
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Deseleccionar esclavo</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;PORTB |= (1 &lt;&lt; PORTB2);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;_delay_ms(1000);<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Compilar con: avr-gcc -mmcu=atmega328p -Os spi.c -o spi.elf
+                </div>
+            </div>
+        </div>
+        
+        <div class="spi-demo">
+            <h2>Simulador de Comunicación SPI</h2>
+            <p>Visualiza el flujo de datos entre maestro y esclavo:</p>
+            
+            <div class="spi-visualization">
+                <div class="master">
+                    <h3>Maestro (ATmega328P)</h3>
+                    <div class="pin">
+                        <span class="pin-name">MOSI (PB3):</span>
+                        <span class="pin-value" id="master-mosi">0</span>
+                    </div>
+                    <div class="pin">
+                        <span class="pin-name">MISO (PB4):</span>
+                        <span class="pin-value" id="master-miso">0</span>
+                    </div>
+                    <div class="pin">
+                        <span class="pin-name">SCK (PB5):</span>
+                        <span class="pin-value" id="master-sck">0</span>
+                    </div>
+                    <div class="pin">
+                        <span class="pin-name">SS (PB2):</span>
+                        <span class="pin-value" id="master-ss">1</span>
+                    </div>
+                </div>
+                
+                <div class="slave">
+                    <h3>Esclavo (Periférico)</h3>
+                    <div class="pin">
+                        <span class="pin-name">MOSI:</span>
+                        <span class="pin-value" id="slave-mosi">0</span>
+                    </div>
+                    <div class="pin">
+                        <span class="pin-name">MISO:</span>
+                        <span class="pin-value" id="slave-miso">0</span>
+                    </div>
+                    <div class="pin">
+                        <span class="pin-name">SCK:</span>
+                        <span class="pin-value" id="slave-sck">0</span>
+                    </div>
+                    <div class="pin">
+                        <span class="pin-name">SS:</span>
+                        <span class="pin-value" id="slave-ss">1</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="data-transfer">
+                <p>Dato transmitido: <span id="tx-data">0x00</span> | Dato recibido: <span id="rx-data">0x00</span></p>
+            </div>
+            
+            <button class="btn" id="transfer-btn">
+                <i class="fas fa-exchange-alt"></i> Iniciar Transferencia
+            </button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de comunicación SPI
+        const transferBtn = document.getElementById('transfer-btn');
+        let transferInProgress = false;
+        
+        // Elementos de visualización
+        const masterMosi = document.getElementById('master-mosi');
+        const masterMiso = document.getElementById('master-miso');
+        const masterSck = document.getElementById('master-sck');
+        const masterSs = document.getElementById('master-ss');
+        
+        const slaveMosi = document.getElementById('slave-mosi');
+        const slaveMiso = document.getElementById('slave-miso');
+        const slaveSck = document.getElementById('slave-sck');
+        const slaveSs = document.getElementById('slave-ss');
+        
+        const txData = document.getElementById('tx-data');
+        const rxData = document.getElementById('rx-data');
+        
+        transferBtn.addEventListener('click', function() {
+            if (transferInProgress) return;
+            transferInProgress = true;
+            
+            // Generar datos aleatorios para la transferencia
+            const randomTxData = Math.floor(Math.random() * 256);
+            const randomRxData = Math.floor(Math.random() * 256);
+            
+            txData.textContent = '0x' + randomTxData.toString(16).padStart(2, '0').toUpperCase();
+            rxData.textContent = '0x' + randomRxData.toString(16).padStart(2, '0').toUpperCase();
+            
+            // Iniciar secuencia de transferencia
+            simulateTransfer(randomTxData, randomRxData);
+        });
+        
+        function simulateTransfer(tx, rx) {
+            // Activar SS (seleccionar esclavo)
+            masterSs.textContent = '0';
+            slaveSs.textContent = '0';
+            
+            // Iniciar reloj y transferencia
+            let step = 0;
+            const interval = setInterval(() => {
+                if (step < 16) {
+                    // Alternar SCK
+                    if (step % 2 === 0) {
+                        masterSck.textContent = '1';
+                        slaveSck.textContent = '1';
+                        
+                        // Mostrar bits en MOSI y MISO (cada 2 pasos es un bit)
+                        if (step > 0) {
+                            const bitPos = 7 - Math.floor((step - 1) / 2);
+                            const mosiBit = (tx >> bitPos) & 1;
+                            const misoBit = (rx >> bitPos) & 1;
+                            
+                            masterMosi.textContent = mosiBit;
+                            slaveMosi.textContent = mosiBit;
+                            
+                            masterMiso.textContent = misoBit;
+                            slaveMiso.textContent = misoBit;
+                        }
+                    } else {
+                        masterSck.textContent = '0';
+                        slaveSck.textContent = '0';
+                    }
+                    
+                    step++;
+                } else {
+                    // Finalizar transferencia
+                    clearInterval(interval);
+                    
+                    // Restablecer pines
+                    setTimeout(() => {
+                        masterSck.textContent = '0';
+                        slaveSck.textContent = '0';
+                        masterMosi.textContent = '0';
+                        slaveMosi.textContent = '0';
+                        masterMiso.textContent = '0';
+                        slaveMiso.textContent = '0';
+                        masterSs.textContent = '1';
+                        slaveSs.textContent = '1';
+                        
+                        transferInProgress = false;
+                    }, 500);
+                }
+            }, 200);
+        }
+    </script>
+</body>
+</html>

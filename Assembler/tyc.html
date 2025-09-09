@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contadores y Temporizadores ATmega328P en Ensamblador</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c2461, #1e3799, #4a69bd);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.4em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 20px;
+            min-height: 320px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            font-size: 1.2em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 10px;
+            padding-left: 22px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.3em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.9em;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .directive {
+            color: #66d9ef;
+        }
+        
+        .register {
+            color: #fd971f;
+        }
+        
+        .label {
+            color: #a6e22e;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .timer-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .timer-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .timer-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .timer-diagram, .register-display {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 350px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .timer-graphic {
+            width: 280px;
+            height: 120px;
+            background: #2c3e50;
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .timer-block {
+            position: absolute;
+            background: #3498db;
+            border: 2px solid #1e3799;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .timer0 { width: 80px; height: 40px; top: 20px; left: 20px; }
+        .timer1 { width: 100px; height: 40px; top: 20px; left: 160px; }
+        .timer2 { width: 80px; height: 40px; top: 70px; left: 100px; }
+        
+        .register-value {
+            font-family: 'Courier New', monospace;
+            background: #2d3e50;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: left;
+        }
+        
+        .bit-display {
+            display: flex;
+            margin: 10px 0;
+        }
+        
+        .bit {
+            width: 30px;
+            height: 30px;
+            background: #e9ecef;
+            margin: 0 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 3px;
+        }
+        
+        .bit.on {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .bit.off {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .prescaler-selector {
+            margin: 15px 0;
+        }
+        
+        .prescaler-option {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background: #e9ecef;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .prescaler-option.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .timer-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .timer-diagram, .register-display {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Contadores y Temporizadores del ATmega328P en Ensamblador</h1>
+            <p class="subtitle">Aprende a programar los temporizadores del ATmega328P usando ensamblador para un control preciso de tiempo y eventos</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción a los Temporizadores</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Temporizadores del ATmega328P</h3>
+                    <ul>
+                        <li>Timer0 - 8 bits (PWM en pines 5 y 6)</li>
+                        <li>Timer1 - 16 bits (PWM en pines 9 y 10)</li>
+                        <li>Timer2 - 8 bits (PWM en pines 3 y 11)</li>
+                    </ul>
+                    
+                    <h3>Modos de Operación</h3>
+                    <ul>
+                        <li>Normal</li>
+                        <li>CTC (Clear Timer on Compare)</li>
+                        <li>Fast PWM</li>
+                        <li>Phase Correct PWM</li>
+                    </ul>
+                    
+                    <h3>Registros Principales</h3>
+                    <ul>
+                        <li>TCCRxA/B - Control</li>
+                        <li>TCNTx - Contador</li>
+                        <li>OCRxA/B - Comparación</li>
+                        <li>TIMSKx - Interrupciones</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los temporizadores son esenciales para medición de tiempo, generación de PWM y gestión de eventos
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Configuración Básica Timer0</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Inicialización en Modo Normal</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar Timer0 en modo normal</span><br>
+                        <span class="comment">; con preescaler de 64</span><br>
+                        <span class="label">timer0_init:</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;CS01)|(1&lt;&lt;CS00) <span class="comment">; Preescaler 64</span><br>
+                        &nbsp;&nbsp;<span class="directive">out</span> <span class="register">TCCR0B</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">clr</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">out</span> <span class="register">TCNT0</span>, <span class="register">r16</span> <span class="comment">; Iniciar contador en 0</span><br>
+                        &nbsp;&nbsp;<span class="directive">ret</span>
+                    </div>
+                    
+                    <h3>Registro TCCR0B</h3>
+                    <ul>
+                        <li>CS02:CS00 - Selector de preescaler</li>
+                        <li>WGM02 - Parte del modo de operación</li>
+                        <li>FOC0A/B - Forced Output Compare</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    CS02:CS00 = 0b011 → Preescaler de 64 (16MHz/64 = 250kHz)
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Modo CTC con Interrupciones</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Configuración para CTC</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar Timer0 en modo CTC</span><br>
+                        <span class="comment">; con interrupciones cada 1ms</span><br>
+                        <span class="label">timer0_ctc_init:</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;WGM01) <span class="comment">; Modo CTC</span><br>
+                        &nbsp;&nbsp;<span class="directive">out</span> <span class="register">TCCR0A</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, 249 <span class="comment">; Valor para OCR0A</span><br>
+                        &nbsp;&nbsp;<span class="directive">out</span> <span class="register">OCR0A</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;OCIE0A) <span class="comment">; Habilitar interrupción</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TIMSK0</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;CS02) <span class="comment">; Preescaler 256</span><br>
+                        &nbsp;&nbsp;<span class="directive">out</span> <span class="register">TCCR0B</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">sei</span> <span class="comment">; Habilitar interrupciones globales</span><br>
+                        &nbsp;&nbsp;<span class="directive">ret</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Frecuencia = 16MHz / (256 * (249 + 1)) = 250Hz → Periodo = 4ms
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Rutina de Servicio de Interrupción</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>ISR para Timer0 Compare A</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Rutina de servicio de interrupción</span><br>
+                        <span class="comment">; para Timer0 Compare A</span><br>
+                        <span class="label">TIMER0_COMPA_vect:</span><br>
+                        &nbsp;&nbsp;<span class="directive">push</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">in</span> <span class="register">r16</span>, <span class="register">SREG</span><br>
+                        &nbsp;&nbsp;<span class="directive">push</span> <span class="register">r16</span><br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">; Aquí el código de la interrupción</span><br>
+                        &nbsp;&nbsp;<span class="comment">; Ejemplo: incrementar un contador</span><br>
+                        &nbsp;&nbsp;<span class="directive">lds</span> <span class="register">r16</span>, <span class="register">contador</span><br>
+                        &nbsp;&nbsp;<span class="directive">inc</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">contador</span>, <span class="register">r16</span><br><br>
+                        
+                        &nbsp;&nbsp;<span class="directive">pop</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">out</span> <span class="register">SREG</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">pop</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">reti</span>
+                    </div>
+                    
+                    <h3>Importante</h3>
+                    <ul>
+                        <li>Preservar registros y SREG</li>
+                        <li>Mantener la rutina lo más corta posible</li>
+                        <li>Usar reti para retornar</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Las ISR deben preservar el estado de los registros que modifican
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Timer1 16-bit en Modo Normal</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Configuración Timer1</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar Timer1 en modo normal</span><br>
+                        <span class="comment">; con preescaler de 1024</span><br>
+                        <span class="label">timer1_init:</span><br>
+                        &nbsp;&nbsp;<span class="directive">clr</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCCR1A</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;CS12)|(1&lt;&lt;CS10) <span class="comment">; Preescaler 1024</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCCR1B</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">clr</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCNT1H</span>, <span class="register">r16</span> <span class="comment">; Inicializar contador</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCNT1L</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ret</span>
+                    </div>
+                    
+                    <h3>Características Timer1</h3>
+                    <ul>
+                        <li>Contador de 16 bits (0-65535)</li>
+                        <li>Mayor precisión para tiempos largos</li>
+                        <li>Múltiples modos de operación</li>
+                        <li>Captura de entrada</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Timer1 puede contar hasta 65535 ticks → 4.19s con preescaler 1024
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Generación de PWM con Timer2</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Configuración PWM Rápido</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar Timer2 para PWM rápido</span><br>
+                        <span class="comment">; no invertido en OC2A (pin 11)</span><br>
+                        <span class="label">timer2_pwm_init:</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;COM2A1)|(1&lt;&lt;WGM21)|(1&lt;&lt;WGM20)</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCCR2A</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;CS20) <span class="comment">; Sin preescaler</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCCR2B</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, 128 <span class="comment">; Ciclo de trabajo 50%</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">OCR2A</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">sbi</span> <span class="register">DDRB</span>, 3 <span class="comment">; PB3 (OC2A) como salida</span><br>
+                        &nbsp;&nbsp;<span class="directive">ret</span>
+                    </div>
+                    
+                    <h3>Modos PWM Timer2</h3>
+                    <ul>
+                        <li>Fast PWM - Mayor frecuencia</li>
+                        <li>Phase Correct PWM - Mayor precisión</li>
+                        <li>Frecuencia ajustable con OCR2A</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Frecuencia PWM = 16MHz / (256 * 1) = 62.5kHz (con preescaler 1)
+                </div>
+            </div>
+            
+            <!-- Presentación 7 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Contador de Eventos Externos</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Configuración para Contar Flancos</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar Timer1 para contar flancos</span><br>
+                        <span class="comment">; en T1 (pin 5)</span><br>
+                        <span class="label">timer1_counter_init:</span><br>
+                        &nbsp;&nbsp;<span class="directive">clr</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCCR1A</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;CS12)|(1&lt;&lt;CS11)|(1&lt;&lt;CS10)</span><br>
+                        &nbsp;&nbsp;<span class="comment">; Fuente externa, flanco de bajada</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCCR1B</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">clr</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCNT1H</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCNT1L</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ret</span>
+                    </div>
+                    
+                    <h3>Opciones de Fuente Externa</h3>
+                    <ul>
+                        <li>CS12:CS10 = 0b110 - Flanco de bajada en T1</li>
+                        <li>CS12:CS10 = 0b111 - Flanco de subida en T1</li>
+                        <li>Útil para encoders, pulsos, etc.</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El contador se incrementa en cada flanco del pin T1 (PD5)
+                </div>
+            </div>
+            
+            <!-- Presentación 8 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Modo CTC con Timer1</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Configuración para CTC de 16 bits</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar Timer1 en modo CTC</span><br>
+                        <span class="comment">; con interrupciones cada 100ms</span><br>
+                        <span class="label">timer1_ctc_init:</span><br>
+                        &nbsp;&nbsp;<span class="directive">clr</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCCR1A</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;WGM12) <span class="comment">; Modo CTC</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCCR1B</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, HIGH(15624) <span class="comment">; 100ms con preescaler 1024</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">OCR1AH</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, LOW(15624)<br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">OCR1AL</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;OCIE1A) <span class="comment">; Habilitar interrupción</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TIMSK1</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;CS12)|(1&lt;&lt;CS10) <span class="comment">; Preescaler 1024</span><br>
+                        &nbsp;&nbsp;<span class="directive">sts</span> <span class="register">TCCR1B</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ret</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Periodo = (15624 + 1) × 1024 / 16MHz = 0.1s = 100ms
+                </div>
+            </div>
+            
+            <!-- Presentación 9 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Ejemplo Completo: Delay Preciso</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Función de Delay en Ensamblador</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Delay preciso de 1ms usando Timer0</span><br>
+                        <span class="label">delay_1ms:</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;CS01) <span class="comment">; Preescaler 8</span><br>
+                        &nbsp;&nbsp;<span class="directive">out</span> <span class="register">TCCR0B</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, 100 <span class="comment">; 100 ticks para 1ms</span><br>
+                        &nbsp;&nbsp;<span class="directive">out</span> <span class="register">TCNT0</span>, <span class="register">r16</span><br>
+                        <span class="label">delay_loop:</span><br>
+                        &nbsp;&nbsp;<span class="directive">in</span> <span class="register">r16</span>, <span class="register">TIFR0</span><br>
+                        &nbsp;&nbsp;<span class="directive">sbrs</span> <span class="register">r16</span>, <span class="register">TOV0</span> <span class="comment">; Esperar overflow</span><br>
+                        &nbsp;&nbsp;<span class="directive">rjmp</span> <span class="label">delay_loop</span><br>
+                        &nbsp;&nbsp;<span class="directive">ldi</span> <span class="register">r16</span>, (1&lt;&lt;TOV0) <span class="comment">; Limpiar flag</span><br>
+                        &nbsp;&nbsp;<span class="directive">out</span> <span class="register">TIFR0</span>, <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">clr</span> <span class="register">r16</span><br>
+                        &nbsp;&nbsp;<span class="directive">out</span> <span class="register">TCCR0B</span>, <span class="register">r16</span> <span class="comment">; Detener timer</span><br>
+                        &nbsp;&nbsp;<span class="directive">ret</span>
+                    </div>
+                    
+                    <h3>Cálculo de Ticks</h3>
+                    <ul>
+                        <li>Frecuencia timer: 16MHz / 8 = 2MHz</li>
+                        <li>Periodo tick: 0.5μs</li>
+                        <li>Ticks para 1ms: 1ms / 0.5μs = 2000 ticks</li>
+                        <li>Valor inicial: 256 - (2000 % 256) = 100</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Este delay es más preciso que los loops de software
+                </div>
+            </div>
+        </div>
+        
+        <div class="timer-demo">
+            <h2>Simulador de Configuración de Temporizador</h2>
+            <p>Explora cómo diferentes configuraciones afectan al temporizador:</p>
+            
+            <div class="timer-visualization">
+                <div class="timer-diagram">
+                    <h3>Timer0 - 8 bits</h3>
+                    <div class="timer-graphic">
+                        <div class="timer-block timer0">TCCR0A</div>
+                        <div class="timer-block timer1">TCCR0B</div>
+                        <div class="timer-block timer2">TCNT0</div>
+                    </div>
+                    
+                    <div class="prescaler-selector">
+                        <h4>Seleccionar Preescaler:</h4>
+                        <div class="prescaler-option" data-value="1">1</div>
+                        <div class="prescaler-option" data-value="8">8</div>
+                        <div class="prescaler-option active" data-value="64">64</div>
+                        <div class="prescaler-option" data-value="256">256</div>
+                        <div class="prescaler-option" data-value="1024">1024</div>
+                    </div>
+                    
+                    <div class="register-value">
+                        TCCR0B: <span id="tccr0b-value">0b00000011</span>
+                    </div>
+                </div>
+                
+                <div class="register-display">
+                    <h3>Registros de Control</h3>
+                    
+                    <h4>TCCR0A - Timer/Counter Control Register A</h4>
+                    <div class="bit-display">
+                        <div class="bit off">COM0A1</div>
+                        <div class="bit off">COM0A0</div>
+                        <div class="bit off">COM0B1</div>
+                        <div class="bit off">COM0B0</div>
+                        <div class="bit off">-</div>
+                        <div class="bit off">-</div>
+                        <div class="bit off">WGM01</div>
+                        <div class="bit off">WGM00</div>
+                    </div>
+                    
+                    <h4>TCCR0B - Timer/Counter Control Register B</h4>
+                    <div class="bit-display" id="tccr0b-bits">
+                        <div class="bit off">FOC0A</div>
+                        <div class="bit off">FOC0B</div>
+                        <div class="bit off">-</div>
+                        <div class="bit off">-</div>
+                        <div class="bit off">WGM02</div>
+                        <div class="bit off">CS02</div>
+                        <div class="bit on">CS01</div>
+                        <div class="bit on">CS00</div>
+                    </div>
+                    
+                    <div class="register-value">
+                        Frecuencia: <span id="frequency-value">250.00</span> kHz
+                    </div>
+                    <div class="register-value">
+                        Periodo de tick: <span id="tick-period">4.00</span> μs
+                    </div>
+                    <div class="register-value">
+                        Overflow cada: <span id="overflow-time">1.02</span> ms
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn" id="calculate-btn">
+                <i class="fas fa-calculator"></i> Calcular Valores
+            </button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de configuración de temporizador - VERSIÓN CORREGIDA
+        document.addEventListener('DOMContentLoaded', function() {
+            const prescalerOptions = document.querySelectorAll('.prescaler-option');
+            const tccr0bValue = document.getElementById('tccr0b-value');
+            const frequencyValue = document.getElementById('frequency-value');
+            const tickPeriod = document.getElementById('tick-period');
+            const overflowTime = document.getElementById('overflow-time');
+            const calculateBtn = document.getElementById('calculate-btn');
+            const tccr0bBits = document.getElementById('tccr0b-bits');
+            
+            // Valores de preescaler y sus configuraciones de bits
+            const prescalers = {
+                '1': { value: 1, bits: [0, 0, 1], binary: '001' },
+                '8': { value: 8, bits: [0, 1, 0], binary: '010' },
+                '64': { value: 64, bits: [0, 1, 1], binary: '011' },
+                '256': { value: 256, bits: [1, 0, 0], binary: '100' },
+                '1024': { value: 1024, bits: [1, 0, 1], binary: '101' }
+            };
+            
+            let currentPrescaler = '64';
+            
+            // Configurar evento para los botones de preescaler
+            prescalerOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const value = this.getAttribute('data-value');
+                    
+                    // Quitar clase active de todos
+                    prescalerOptions.forEach(opt => opt.classList.remove('active'));
+                    // Añadir clase active al seleccionado
+                    this.classList.add('active');
+                    
+                    currentPrescaler = value;
+                    updateDisplay();
+                });
+            });
+            
+            // Actualizar la visualización
+            function updateDisplay() {
+                const prescaler = prescalers[currentPrescaler];
+                const prescalerValue = prescaler.value;
+                const bits = prescaler.bits;
+                const binaryStr = prescaler.binary;
+                
+                // Actualizar bits CS02:CS00 en TCCR0B
+                const csBits = tccr0bBits.querySelectorAll('.bit');
+                // Los bits CS están en las posiciones 5, 6, 7 (CS02, CS01, CS00)
+                
+                // Reiniciar todos los bits CS
+                for (let i = 5; i <= 7; i++) {
+                    csBits[i].classList.remove('on', 'off');
+                }
+                
+                // Establecer nuevos valores para los bits CS
+                csBits[5].classList.add(bits[0] === 1 ? 'on' : 'off'); // CS02
+                csBits[6].classList.add(bits[1] === 1 ? 'on' : 'off'); // CS01
+                csBits[7].classList.add(bits[2] === 1 ? 'on' : 'off'); // CS00
+                
+                // Actualizar valores calculados
+                const frequency = 16000 / prescalerValue; // en kHz
+                const tickPeriodVal = (1 / (frequency * 1000)) * 1000000; // en μs
+                const overflowTimeVal = (256 / (frequency * 1000)) * 1000; // en ms
+                
+                tccr0bValue.textContent = `0b00000${binaryStr}`;
+                frequencyValue.textContent = frequency.toFixed(2);
+                tickPeriod.textContent = tickPeriodVal.toFixed(2);
+                overflowTime.textContent = overflowTimeVal.toFixed(2);
+            }
+            
+            // Inicializar visualización
+            updateDisplay();
+            
+            // Configurar evento para el botón de calcular
+            calculateBtn.addEventListener('click', updateDisplay);
+        });
+    </script>
+</body>
+</html>

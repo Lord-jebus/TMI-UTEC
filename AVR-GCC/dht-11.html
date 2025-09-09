@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunicación One-Wire con DHT11 y ATmega328P</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 25px;
+            min-height: 350px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 18px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .include {
+            color: #ae81ff;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .sensor-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .sensor-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .sensor-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .sensor-diagram, .data-display {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 350px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sensor-graphic {
+            width: 120px;
+            height: 160px;
+            background: #2c3e50;
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sensor-body {
+            width: 100px;
+            height: 120px;
+            background: #e74c3c;
+            border-radius: 5px;
+            position: absolute;
+            top: 20px;
+            left: 10px;
+        }
+        
+        .sensor-grid {
+            position: absolute;
+            top: 30px;
+            left: 15px;
+            width: 70px;
+            height: 50px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 3px;
+        }
+        
+        .sensor-cell {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 1px;
+        }
+        
+        .sensor-pin {
+            position: absolute;
+            bottom: 0;
+            width: 10px;
+            height: 15px;
+            background: #7f8c8d;
+        }
+        
+        .pin1 { left: 15px; }
+        .pin2 { left: 35px; }
+        .pin3 { left: 55px; }
+        .pin4 { left: 75px; }
+        
+        .data-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #3498db;
+            margin: 15px 0;
+        }
+        
+        .data-unit {
+            font-size: 1.2em;
+            color: #7f8c8d;
+        }
+        
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+        
+        .wave-diagram {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+        }
+        
+        .timing-diagram {
+            height: 100px;
+            background: #1e272e;
+            border-radius: 5px;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .signal-line {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #3498db;
+            top: 50%;
+        }
+        
+        .signal-pulse {
+            position: absolute;
+            background: #ffeb3b;
+            height: 40px;
+            width: 0;
+            top: 30px;
+            transition: width 0.3s;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .sensor-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .sensor-diagram, .data-display {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Comunicación One-Wire con DHT11 y ATmega328P</h1>
+            <p class="subtitle">Aprende a utilizar el protocolo One-Wire y sensores como el DHT11 con el microcontrolador ATmega328P programado en C usando AVR-GCC</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción a One-Wire</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es One-Wire?</h3>
+                    <ul>
+                        <li>Protocolo de comunicación serie asíncrono</li>
+                        <li>Desarrollado por Dallas Semiconductor</li>
+                        <li>Requiere solo un cable de datos (+ tierra)</li>
+                        <li>Comunicación half-duplex</li>
+                        <li>Dispositivos con dirección única de 64 bits</li>
+                    </ul>
+                    
+                    <h3>Ventajas</h3>
+                    <ul>
+                        <li>Minimiza cableado</li>
+                        <li>Bajo costo de implementación</li>
+                        <li>Múltiples dispositivos en un mismo bus</li>
+                        <li>Fácil de implementar</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El protocolo One-Wire es ideal para sensores de bajo costo como el DHT11
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Sensor DHT11</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características</h3>
+                    <ul>
+                        <li>Sensor de humedad y temperatura</li>
+                        <li>Rango de humedad: 20-90% RH (±5%)</li>
+                        <li>Rango de temperatura: 0-50°C (±2°C)</li>
+                        <li>Protocolo de comunicación propio (One-Wire-like)</li>
+                        <li>Bajo consumo de energía</li>
+                        <li>4 pines (pero solo 3 utilizados)</li>
+                    </ul>
+                    
+                    <h3>Pines</h3>
+                    <ul>
+                        <li>VCC - Alimentación (3.5-5.5V)</li>
+                        <li>DATA - Comunicación de datos</li>
+                        <li>NC - No conectado</li>
+                        <li>GND - Tierra</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El DHT11 requiere una resistencia pull-up de 4.7kΩ-10kΩ en el pin de datos
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Conexión con ATmega328P</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Configuración de pines</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Definición de pines</span><br>
+                        <span class="define">#define</span> DHT11_PIN PD2<br>
+                        <span class="define">#define</span> DHT11_PORT PORTD<br>
+                        <span class="define">#define</span> DHT11_DDR DDRD<br>
+                        <span class="define">#define</span> DHT11_PINR PIND<br><br>
+                        
+                        <span class="comment">// Inicializar pin del DHT11</span><br>
+                        <span class="keyword">void</span> <span class="function">dht11_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Inicialmente poner el pin como entrada</span><br>
+                        &nbsp;&nbsp;DHT11_DDR &amp;= ~(1 &lt;&lt; DHT11_PIN);<br>
+                        &nbsp;&nbsp;<span class="comment">// Activar resistencia pull-up</span><br>
+                        &nbsp;&nbsp;DHT11_PORT |= (1 &lt;&lt; DHT11_PIN);<br>
+                        }
+                    </div>
+                    
+                    <h3>Esquema de conexión</h3>
+                    <ul>
+                        <li>VCC → 5V</li>
+                        <li>DATA → PD2 (con resistencia pull-up de 4.7kΩ a VCC)</li>
+                        <li>GND → GND</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La resistencia pull-up es esencial para el correcto funcionamiento
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Protocolo de Comunicación</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Secuencia de comunicación</h3>
+                    <ol>
+                        <li>MCU envía señal de inicio</li>
+                        <li>DHT11 responde con señal de respuesta</li>
+                        <li>DHT11 envía 40 bits de datos (5 bytes)</li>
+                        <li>MCU verifica checksum</li>
+                    </ol>
+                    
+                    <h3>Estructura de datos</h3>
+                    <ul>
+                        <li>Byte 0: Humedad entera</li>
+                        <li>Byte 1: Humedad decimal (siempre 0 en DHT11)</li>
+                        <li>Byte 2: Temperatura entera</li>
+                        <li>Byte 3: Temperatura decimal (siempre 0 en DHT11)</li>
+                        <li>Byte 4: Checksum (suma de bytes 0-3)</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La comunicación completa tarda aproximadamente 4ms
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Señal de Inicio</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Envío de la señal de inicio</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Enviar señal de inicio al DHT11</span><br>
+                        <span class="keyword">void</span> <span class="function">dht11_start</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar pin como salida</span><br>
+                        &nbsp;&nbsp;DHT11_DDR |= (1 &lt;&lt; DHT11_PIN);<br>
+                        &nbsp;&nbsp;<span class="comment">// Poner pin a LOW</span><br>
+                        &nbsp;&nbsp;DHT11_PORT &amp;= ~(1 &lt;&lt; DHT11_PIN);<br>
+                        &nbsp;&nbsp;_delay_ms(18);<br>
+                        &nbsp;&nbsp;<span class="comment">// Poner pin a HIGH</span><br>
+                        &nbsp;&nbsp;DHT11_PORT |= (1 &lt;&lt; DHT11_PIN);<br>
+                        &nbsp;&nbsp;_delay_us(30);<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar pin como entrada</span><br>
+                        &nbsp;&nbsp;DHT11_DDR &amp;= ~(1 &lt;&lt; DHT11_PIN);<br>
+                        }
+                    </div>
+                    
+                    <h3>Timing crítico</h3>
+                    <ul>
+                        <li>LOW por al menos 18ms</li>
+                        <li>HIGH por 20-40μs</li>
+                        <li>Luego cambiar a modo entrada</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El tiempo de la señal de inicio debe ser preciso para que el DHT11 responda
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Esperar Respuesta</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Esperar la respuesta del DHT11</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Esperar respuesta del DHT11</span><br>
+                        <span class="keyword">uint8_t</span> <span class="function">dht11_check_response</span>() {<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> response = 0;<br>
+                        &nbsp;&nbsp;_delay_us(40);<br>
+                        &nbsp;&nbsp;<span class="keyword">if</span> (!(DHT11_PINR & (1 &lt;&lt; DHT11_PIN))) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;_delay_us(80);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (DHT11_PINR & (1 &lt;&lt; DHT11_PIN)) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;response = 1;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;_delay_us(40);<br>
+                        &nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> response;<br>
+                        }
+                    </div>
+                    
+                    <h3>Secuencia de respuesta</h3>
+                    <ul>
+                        <li>DHT11 responde con un LOW por ~80μs</li>
+                        <li>Luego HIGH por ~80μs</li>
+                        <li>Después comienza a enviar datos</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Si no hay respuesta, verificar conexiones y resistencia pull-up
+                </div>
+            </div>
+            
+            <!-- Presentación 7 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Lectura de Bits</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Función para leer un bit</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Leer un bit del DHT11</span><br>
+                        <span class="keyword">uint8_t</span> <span class="function">dht11_read_bit</span>() {<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> bit = 0;<br>
+                        &nbsp;&nbsp;<span class="comment">// Esperar inicio del bit (LOW por ~50μs)</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (!(DHT11_PINR & (1 &lt;&lt; DHT11_PIN)));<br>
+                        &nbsp;&nbsp;_delay_us(30);<br>
+                        &nbsp;&nbsp;<span class="comment">// Leer valor del bit</span><br>
+                        &nbsp;&nbsp;<span class="keyword">if</span> (DHT11_PINR & (1 &lt;&lt; DHT11_PIN)) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;bit = 1;<br>
+                        &nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;<span class="comment">// Esperar fin del bit (HIGH)</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (DHT11_PINR & (1 &lt;&lt; DHT11_PIN));<br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> bit;<br>
+                        }
+                    </div>
+                    
+                    <h3>Duración de bits</h3>
+                    <ul>
+                        <li>Bit '0': LOW ~50μs, HIGH ~26-28μs</li>
+                        <li>Bit '1': LOW ~50μs, HIGH ~70μs</li>
+                        <li>El tiempo total de un bit es ~100μs</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La diferencia entre 0 y 1 está en la duración del HIGH
+                </div>
+            </div>
+            
+            <!-- Presentación 8 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Lectura de Bytes</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Función para leer un byte</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Leer un byte del DHT11</span><br>
+                        <span class="keyword">uint8_t</span> <span class="function">dht11_read_byte</span>() {<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> byte = 0;<br>
+                        &nbsp;&nbsp;<span class="keyword">for</span> (<span class="keyword">uint8_t</span> i = 0; i < 8; i++) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;byte &lt;&lt;= 1;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;byte |= dht11_read_bit();<br>
+                        &nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> byte;<br>
+                        }
+                    </div>
+                    
+                    <h3>Proceso de lectura</h3>
+                    <ul>
+                        <li>Se leen 5 bytes (40 bits) en total</li>
+                        <li>Cada byte se lee bit a bit empezando por el MSB</li>
+                        <li>El último byte es el checksum</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los bytes se leen en orden: humedad_entera, humedad_decimal, temperatura_entera, temperatura_decimal, checksum
+                </div>
+            </div>
+            
+            <!-- Presentación 9 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Función Principal de Lectura</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Leer todos los datos del DHT11</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Leer datos del DHT11</span><br>
+                        <span class="keyword">uint8_t</span> <span class="function">dht11_read</span>(<span class="keyword">uint8_t</span> *humidity, <span class="keyword">uint8_t</span> *temperature) {<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> data[5] = {0};<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> checksum;<br><br>
+                        
+                        &nbsp;&nbsp;dht11_start();<br>
+                        &nbsp;&nbsp;<span class="keyword">if</span> (!dht11_check_response()) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> 0; <span class="comment">// Error</span><br>
+                        &nbsp;&nbsp;}<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Leer 5 bytes</span><br>
+                        &nbsp;&nbsp;<span class="keyword">for</span> (<span class="keyword">uint8_t</span> i = 0; i < 5; i++) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;data[i] = dht11_read_byte();<br>
+                        &nbsp;&nbsp;}<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Verificar checksum</span><br>
+                        &nbsp;&nbsp;checksum = data[0] + data[1] + data[2] + data[3];<br>
+                        &nbsp;&nbsp;<span class="keyword">if</span> (checksum != data[4]) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> 0; <span class="comment">// Error de checksum</span><br>
+                        &nbsp;&nbsp;}<br><br>
+                        
+                        &nbsp;&nbsp;*humidity = data[0];<br>
+                        &nbsp;&nbsp;*temperature = data[2];<br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> 1; <span class="comment">// Éxito</span><br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Siempre verificar el checksum para asegurar la integridad de los datos
+                </div>
+            </div>
+            
+            <!-- Presentación 10 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Manejo de Errores</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Posibles errores</h3>
+                    <ul>
+                        <li>Sin respuesta del sensor</li>
+                        <li>Error de checksum</li>
+                        <li>Datos inconsistentes</li>
+                        <li>Timing incorrecto</li>
+                    </ul>
+                    
+                    <h3>Estrategias de manejo</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Intentar lectura con reintentos</span><br>
+                        <span class="keyword">uint8_t</span> <span class="function">dht11_read_with_retry</span>(<span class="keyword">uint8_t</span> *h, <span class="keyword">uint8_t</span> *t, <span class="keyword">uint8_t</span> retries) {<br>
+                        &nbsp;&nbsp;<span class="keyword">for</span> (<span class="keyword">uint8_t</span> i = 0; i < retries; i++) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (dht11_read(h, t)) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> 1; <span class="comment">// Éxito</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;_delay_ms(1000);<br>
+                        &nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> 0; <span class="comment">// Fallo después de reintentos</span><br>
+                        }
+                    </div>
+                    
+                    <h3>Consideraciones</h3>
+                    <ul>
+                        <li>No leer más frecuentemente que cada 2 segundos</li>
+                        <li>Verificar valores dentro de rangos esperados</li>
+                        <li>Implementar timeout en las esperas</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Un buen manejo de errores es esencial para aplicaciones robustas
+                </div>
+            </div>
+            
+            <!-- Presentación 11 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Ejemplo Completo</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Programa completo con UART</h3>
+                    
+                    <div class="code-block">
+                        <span class="include">#include</span> <span class="keyword">&lt;avr/io.h&gt;</span><br>
+                        <span class="include">#include</span> <span class="keyword">&lt;util/delay.h&gt;</span><br>
+                        <span class="include">#include</span> <span class="keyword">&lt;stdio.h&gt;</span><br><br>
+                        
+                        <span class="comment">// Inicializar UART para debug</span><br>
+                        <span class="keyword">void</span> <span class="function">uart_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Configuración UART (9600 baudios)</span><br>
+                        &nbsp;&nbsp;UBRR0H = 0;<br>
+                        &nbsp;&nbsp;UBRR0L = 103; <span class="comment">// Para 16MHz</span><br>
+                        &nbsp;&nbsp;UCSR0B = (1 &lt;&lt; TXEN0) | (1 &lt;&lt; RXEN0);<br>
+                        &nbsp;&nbsp;UCSR0C = (1 &lt;&lt; UCSZ01) | (1 &lt;&lt; UCSZ00);<br>
+                        }<br><br>
+                        
+                        <span class="keyword">int</span> <span class="function">main</span>(<span class="keyword">void</span>) {<br>
+                        &nbsp;&nbsp;uart_init();<br>
+                        &nbsp;&nbsp;dht11_init();<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> humidity, temperature;<br>
+                        &nbsp;&nbsp;<span class="keyword">char</span> buffer[30];<br><br>
+                        
+                        &nbsp;&nbsp;<span class="keyword">while</span> (1) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (dht11_read_with_retry(&humidity, &temperature, 3)) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf(buffer, "H: %d%%, T: %dC\n", humidity, temperature);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Enviar por UART</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;_delay_ms(2000);<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Compilar con: avr-gcc -mmcu=atmega328p -Os dht11.c -o dht11.elf
+                </div>
+            </div>
+            
+            <!-- Presentación 12 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Otros Sensores One-Wire</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>DHT22 (AM2302)</h3>
+                    <ul>
+                        <li>Mayor precisión que DHT11</li>
+                        <li>Humedad: 0-100% RH (±2%)</li>
+                        <li>Temperatura: -40-80°C (±0.5°C)</li>
+                        <li>Mismo protocolo pero diferentes tiempos</li>
+                    </ul>
+                    
+                    <h3>DS18B20</h3>
+                    <ul>
+                        <li>Sensor de temperatura only</li>
+                        <li>Rango: -55°C a +125°C</li>
+                        <li>Precisión: ±0.5°C</li>
+                        <li>Verdadero protocolo One-Wire</li>
+                        <li>Direccionamiento único</li>
+                    </ul>
+                    
+                    <h3>Ventajas de One-Wire</h3>
+                    <ul>
+                        <li>Múltiples sensores en un mismo pin</li>
+                        <li>Distancia hasta 300 metros</li>
+                        <li>Bajo consumo de energía</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El protocolo One-Wire permite conectar múltiples sensores en un solo bus
+                </div>
+            </div>
+        </div>
+        
+        <div class="sensor-demo">
+            <h2>Simulador de Sensor DHT11</h2>
+            <p>Observa cómo funciona la comunicación con el sensor DHT11:</p>
+            
+            <div class="sensor-visualization">
+                <div class="sensor-diagram">
+                    <h3>Sensor DHT11</h3>
+                    <div class="sensor-graphic">
+                        <div class="sensor-body"></div>
+                        <div class="sensor-grid">
+                            <div class="sensor-cell"></div><div class="sensor-cell"></div><div class="sensor-cell"></div><div class="sensor-cell"></div>
+                            <div class="sensor-cell"></div><div class="sensor-cell"></div><div class="sensor-cell"></div><div class="sensor-cell"></div>
+                            <div class="sensor-cell"></div><div class="sensor-cell"></div><div class="sensor-cell"></div><div class="sensor-cell"></div>
+                        </div>
+                        <div class="sensor-pin pin1"></div>
+                        <div class="sensor-pin pin2"></div>
+                        <div class="sensor-pin pin3"></div>
+                        <div class="sensor-pin pin4"></div>
+                    </div>
+                    
+                    <div class="data-row">
+                        <span>VCC:</span>
+                        <span>5V</span>
+                    </div>
+                    <div class="data-row">
+                        <span>DATA:</span>
+                        <span>PD2 (con pull-up)</span>
+                    </div>
+                    <div class="data-row">
+                        <span>GND:</span>
+                        <span>Tierra</span>
+                    </div>
+                    
+                    <button class="btn" id="read-sensor-btn">
+                        <i class="fas fa-thermometer-half"></i> Leer Sensor
+                    </button>
+                </div>
+                
+                <div class="data-display">
+                    <h3>Datos del Sensor</h3>
+                    <div class="data-value" id="humidity-value">--</div>
+                    <div class="data-unit">Humedad Relativa (%)</div>
+                    
+                    <div class="data-value" id="temperature-value">--</div>
+                    <div class="data-unit">Temperatura (°C)</div>
+                    
+                    <div class="wave-diagram">
+                        <p>Señal de comunicación:</p>
+                        <div class="timing-diagram">
+                            <div class="signal-line"></div>
+                            <div class="signal-pulse" id="signal-pulse"></div>
+                        </div>
+                        <p id="signal-state">Esperando lectura...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de sensor DHT11
+        const readSensorBtn = document.getElementById('read-sensor-btn');
+        const humidityValue = document.getElementById('humidity-value');
+        const temperatureValue = document.getElementById('temperature-value');
+        const signalPulse = document.getElementById('signal-pulse');
+        const signalState = document.getElementById('signal-state');
+        
+        // Simular lectura del sensor
+        readSensorBtn.addEventListener('click', function() {
+            // Generar valores aleatorios (simulando lectura)
+            const humidity = Math.floor(Math.random() * 30) + 40; // 40-70%
+            const temperature = Math.floor(Math.random() * 15) + 20; // 20-35°C
+            
+            humidityValue.textContent = humidity;
+            temperatureValue.textContent = temperature;
+            
+            // Animación de la señal
+            simulateSignal();
+        });
+        
+        // Simular señal de comunicación
+        function simulateSignal() {
+            signalState.textContent = "Iniciando comunicación...";
+            signalPulse.style.width = '0';
+            signalPulse.style.backgroundColor = '#ffeb3b';
+            
+            // Secuencia de señal
+            setTimeout(() => {
+                signalState.textContent = "Señal de inicio (18ms LOW)";
+                signalPulse.style.width = '30%';
+                signalPulse.style.backgroundColor = '#e74c3c';
+            }, 500);
+            
+            setTimeout(() => {
+                signalState.textContent = "Esperando respuesta";
+                signalPulse.style.width = '35%';
+                signalPulse.style.backgroundColor = '#3498db';
+            }, 1500);
+            
+            setTimeout(() => {
+                signalState.textContent = "Recibiendo datos (40 bits)";
+                signalPulse.style.width = '80%';
+                signalPulse.style.backgroundColor = '#2ecc71';
+            }, 2000);
+            
+            setTimeout(() => {
+                signalState.textContent = "Comunicación completada";
+                signalPulse.style.width = '100%';
+                signalPulse.style.backgroundColor = '#2ecc71';
+            }, 3000);
+            
+            // Reiniciar después de un tiempo
+            setTimeout(() => {
+                signalState.textContent = "Esperando lectura...";
+                signalPulse.style.width = '0';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buses de Comunicación en ATmega328P</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c2461, #1e3799, #4a69bd);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.4em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 20px;
+            min-height: 320px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            font-size: 1.2em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 10px;
+            padding-left: 22px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.3em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.9em;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .bus-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .bus-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .bus-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .bus-diagram, .bus-config {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 350px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .bus-graphic {
+            width: 280px;
+            height: 300px;
+            background: #2c3e50;
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            color: white;
+            padding: 15px;
+        }
+        
+        .bus-line {
+            width: 90%;
+            height: 30px;
+            background: #3498db;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .bus-arrow {
+            position: absolute;
+            font-size: 1.2em;
+            color: #ffeb3b;
+        }
+        
+        .left-arrow {
+            left: 5px;
+        }
+        
+        .right-arrow {
+            right: 5px;
+        }
+        
+        .bidirectional-arrow {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .bus-config-item {
+            margin: 15px 0;
+            text-align: left;
+        }
+        
+        .config-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .config-option {
+            padding: 8px 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .config-option.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        .operation-log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .bus-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .bus-diagram, .bus-config {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Buses de Comunicación en ATmega328P</h1>
+            <p class="subtitle">Aprende sobre los buses de datos, direcciones y control, y sus diferentes clasificaciones en el ATmega328P</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Buses en Arquitectura Harvard</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Arquitectura Harvard del ATmega328P</h3>
+                    <ul>
+                        <li>Buses separados para instrucciones y datos</li>
+                        <li>Mayor velocidad que la arquitectura Von Neumann</li>
+                        <li>Permite acceso simultáneo a memoria de programa y datos</li>
+                        <li>Optimizado para ejecución eficiente de instrucciones</li>
+                    </ul>
+                    
+                    <h3>Buses Principales</h3>
+                    <ul>
+                        <li>Bus de Datos: Transfiere información (8 bits)</li>
+                        <li>Bus de Direcciones: Especifica ubicaciones (16 bits para Flash)</li>
+                        <li>Bus de Control: Gestiona operaciones y temporización</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La arquitectura Harvard es característica de la mayoría de los microcontroladores AVR
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Bus de Datos</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características del Bus de Datos</h3>
+                    <ul>
+                        <li>Bus bidireccional de 8 bits</li>
+                        <li>Transfiere datos entre CPU, memoria y periféricos</li>
+                        <li>Multiplexado en algunos casos para ahorrar pines</li>
+                        <li>Puede operar en diferentes modos (simplex, half-duplex, full-duplex)</li>
+                    </ul>
+                    
+                    <h3>Ejemplo en Ensamblador</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Transferencia de datos através del bus</span><br>
+                        <span class="keyword">lds</span> <span class="register">r16</span>, 0x0060  <span class="comment">; Leer dato de RAM (bus de datos)</span><br>
+                        <span class="keyword">sts</span> 0x0060, <span class="register">r16</span>  <span class="comment">; Escribir dato en RAM (bus de datos)</span><br>
+                        <span class="keyword">out</span> <span class="register">PORTB</span>, <span class="register">r16</span>  <span class="comment">; Escribir en puerto (bus de datos)</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El bus de datos mueve información entre los diferentes componentes del microcontrolador
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Bus de Direcciones</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características del Bus de Direcciones</h3>
+                    <ul>
+                        <li>Bus unidireccional de 16 bits para memoria de programa</li>
+                        <li>Bus de 16 bits para memoria de datos (pero solo 8 bits para E/S)</li>
+                        <li>Generado por el CPU o por instrucciones especiales</li>
+                        <li>Selecciona ubicaciones específicas en memoria</li>
+                    </ul>
+                    
+                    <h3>Espacios de Direcciones</h3>
+                    <ul>
+                        <li>Memoria Flash: 0x0000 - 0x3FFF (32KB)</li>
+                        <li>SRAM: 0x0100 - 0x08FF (2KB)</li>
+                        <li>EEPROM: 0x0000 - 0x03FF (1KB)</li>
+                        <li>Registros de E/S: 0x00 - 0x3F</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El bus de direcciones permite acceder a 65536 ubicaciones diferentes (16 bits)
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Bus de Control</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Señales de Control</h3>
+                    <ul>
+                        <li>Señales de lectura (RD) y escritura (WR)</li>
+                        <li>Selección de memoria (CS - Chip Select)</li>
+                        <li>Señales de interrupción (INT)</li>
+                        <li>Señales de reloj (CLK)</li>
+                        <li>Reset y control de energía</li>
+                    </ul>
+                    
+                    <h3>Funciones del Bus de Control</h3>
+                    <ul>
+                        <li>Sincroniza las operaciones del sistema</li>
+                        <li>Gestiona el acceso a recursos compartidos</li>
+                        <li>Controla la dirección del flujo de datos</li>
+                        <li>Gestiona interrupciones y excepciones</li>
+                    </ul>
+                    
+                    <h3>Ejemplo de Control</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Habilitar puerto como salida (señal de control)</span><br>
+                        <span class="keyword">sbi</span> <span class="register">DDRB</span>, 5  <span class="comment">; Configurar PB5 como salida</span><br><br>
+                        
+                        <span class="comment">; Habilitar interrupción (señal de control)</span><br>
+                        <span class="keyword">sbi</span> <span class="register">EIMSK</span>, <span class="register">INT0</span>  <span class="comment">; Habilitar INT0</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El bus de control gestiona la temporización y coordinación de todas las operaciones
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Comunicación Simplex</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características Simplex</h3>
+                    <ul>
+                        <li>Comunicación unidireccional</li>
+                        <li>Un dispositivo transmite, otro(s) recibe(n)</li>
+                        <li>No hay capacidad de respuesta por el mismo canal</li>
+                        <li>Simple pero limitado</li>
+                    </ul>
+                    
+                    <h3>Ejemplos en ATmega328P</h3>
+                    <ul>
+                        <li>Generación de señales PWM</li>
+                        <li>Control de actuadores (LEDs, motores)</li>
+                        <li>Escritura en displays</li>
+                        <li>Configuración de periféricos</li>
+                    </ul>
+                    
+                    <h3>Ejemplo en Código</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Ejemplo de comunicación simplex - Transmitir por PWM</span><br>
+                        <span class="keyword">sbi</span> <span class="register">DDRB</span>, 1      <span class="comment">; PB1 como salida (OC1A)</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;COM1A1)  <span class="comment">; Modo no invertido</span><br>
+                        <span class="keyword">sts</span> <span class="register">TCCR1A</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, 128      <span class="comment">; Ciclo de trabajo 50%</span><br>
+                        <span class="keyword">sts</span> <span class="register">OCR1AL</span>, <span class="register">r16</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La comunicación simplex es ideal cuando solo se necesita transmitir información en una dirección
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Comunicación Half-Duplex</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características Half-Duplex</h3>
+                    <ul>
+                        <li>Comunicación bidireccional pero no simultánea</li>
+                        <li>Mismo medio para transmitir y recibir</li>
+                        <li>Requiere protocolo para alternar entre transmisión y recepción</li>
+                        <li>Más eficiente que simplex pero más lento que full-duplex</li>
+                    </ul>
+                    
+                    <h3>Ejemplos en ATmega328P</h3>
+                    <ul>
+                        <li>Comunicación I2C (TWI)</li>
+                        <li>Comunicación SPI en modo half-duplex</li>
+                        <li>Protocolos personalizados de un solo cable</li>
+                        <li>Comunicación con algunos sensores</li>
+                    </ul>
+                    
+                    <h3>Ejemplo con I2C</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar I2C (TWI) - Comunicación half-duplex</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, 0x48       <span class="comment">; Dirección del esclavo</span><br>
+                        <span class="keyword">sts</span> <span class="register">TWAR</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;TWEN)  <span class="comment">; Habilitar TWI</span><br>
+                        <span class="keyword">sts</span> <span class="register">TWCR</span>, <span class="register">r16</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El modo half-duplex es común en buses compartidos donde múltiples dispositivos se comunican
+                </div>
+            </div>
+            
+            <!-- Presentación 7 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Comunicación Full-Duplex</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características Full-Duplex</h3>
+                    <ul>
+                        <li>Comunicación bidireccional simultánea</li>
+                        <li>Canales separados para transmisión y recepción</li>
+                        <li>Máximo rendimiento en comunicación</li>
+                        <li>Requiere más recursos que half-duplex</li>
+                    </ul>
+                    
+                    <h3>Ejemplos en ATmega328P</h3>
+                    <ul>
+                        <li>Comunicación UART (con hardware adicional)</li>
+                        <li>Comunicación SPI full-duplex</li>
+                        <li>Comunicación con memorias y periféricos avanzados</li>
+                    </ul>
+                    
+                    <h3>Ejemplo con SPI</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar SPI - Comunicación full-duplex</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;MSTR)  <span class="comment">; Modo maestro</span><br>
+                        <span class="keyword">out</span> <span class="register">SPCR</span>, <span class="register">r16</span><br>
+                        <span class="keyword">sbi</span> <span class="register">DDRB</span>, 3      <span class="comment">; MOSI como salida</span><br>
+                        <span class="keyword">sbi</span> <span class="register">DDRB</span>, 5      <span class="comment">; SCK como salida</span><br>
+                        <span class="keyword">cbi</span> <span class="register">DDRB</span>, 4      <span class="comment">; MISO como entrada</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El modo full-duplex ofrece el máximo rendimiento pero requiere más pines y recursos
+                </div>
+            </div>
+            
+            <!-- Presentación 8 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Comunicación Serial vs Paralela</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Comunicación Serial</h3>
+                    <ul>
+                        <li>Transmisión bit a bit por un solo canal</li>
+                        <li>Menos pines requeridos</li>
+                        <li>Mayor distancia posible</li>
+                        <li>Velocidad generalmente más lenta que paralela</li>
+                        <li>Ejemplos: UART, I2C, SPI, USB</li>
+                    </ul>
+                    
+                    <h3>Comunicación Paralela</h3>
+                    <ul>
+                        <li>Transmisión de múltiples bits simultáneamente</li>
+                        <li>Más pines requeridos</li>
+                        <li>Limitada a distancias cortas</li>
+                        <li>Mayor velocidad que serial para distancias cortas</li>
+                        <li>Ejemplos: Bus de datos interno, comunicación con memorias externas</li>
+                    </ul>
+                    
+                    <h3>Comparación</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Ejemplo serial - Transmitir byte por UART</span><br>
+                        <span class="keyword">lds</span> <span class="register">r16</span>, <span class="register">UDR0</span>  <span class="comment">; Leer dato recibido (serial)</span><br><br>
+                        
+                        <span class="comment">; Ejemplo paralelo - Escribir en puerto</span><br>
+                        <span class="keyword">out</span> <span class="register">PORTB</span>, <span class="register">r16</span>  <span class="comment">; Escribir 8 bits simultáneos (paralelo)</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La comunicación serial es más común para comunicación externa, mientras que la paralela se usa internamente
+                </div>
+            </div>
+            
+            <!-- Presentación 9 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Comunicación Síncrona vs Asíncrona</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Comunicación Síncrona</h3>
+                    <ul>
+                        <li>Requiere señal de reloj compartida</li>
+                        <li>Mayor velocidad de transferencia</li>
+                        <li>Mejor para distancias cortas</li>
+                        <li>Ejemplos: SPI, I2C, comunicación con periféricos</li>
+                    </ul>
+                    
+                    <h3>Comunicación Asíncrona</h3>
+                    <ul>
+                        <li>No requiere reloj compartido</li>
+                        <li>Usa bits de inicio y parada para sincronización</li>
+                        <li>Mejor para distancias largas</li>
+                        <li>Ejemplos: UART, comunicación serial</li>
+                    </ul>
+                    
+                    <h3>Ejemplo Síncrono (SPI)</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Transmisión síncrona con SPI</span><br>
+                        <span class="keyword">out</span> <span class="register">SPDR</span>, <span class="register">r16</span>  <span class="comment">; Iniciar transmisión</span><br>
+                        <span class="label">espera_spi:</span><br>
+                        <span class="keyword">sbis</span> <span class="register">SPSR</span>, <span class="register">SPIF</span>  <span class="comment">; Esperar fin de transmisión</span><br>
+                        <span class="keyword">rjmp</span> <span class="label">espera_spi</span><br>
+                        <span class="keyword">in</span> <span class="register">r17</span>, <span class="register">SPDR</span>  <span class="comment">; Leer dato recibido</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La comunicación síncrona es más rápida pero requiere un canal adicional para el reloj
+                </div>
+            </div>
+            
+            <!-- Presentación 10 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Detección de Errores: Paridad</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Paridad en Comunicación</h3>
+                    <ul>
+                        <li>Método simple para detección de errores</li>
+                        <li>Bit adicional que indica si el número de 1s es par o impar</li>
+                        <li>Detección de errores de un solo bit</li>
+                        <li>No puede corregir errores, solo detectarlos</li>
+                    </ul>
+                    
+                    <h3>Paridad Par</h3>
+                    <ul>
+                        <li>Bit de paridad se establece para que el total de 1s sea par</li>
+                        <li>Ejemplo: Dato 1011001 (4 unos) → Paridad 0</li>
+                        <li>Ejemplo: Dato 1011011 (5 unos) → Paridad 1</li>
+                    </ul>
+                    
+                    <h3>Paridad Impar</h3>
+                    <ul>
+                        <li>Bit de paridad se establece para que el total de 1s sea impar</li>
+                        <li>Ejemplo: Dato 1011001 (4 unos) → Paridad 1</li>
+                        <li>Ejemplo: Dato 1011011 (5 unos) → Paridad 0</li>
+                    </ul>
+                    
+                    <h3>Configuración en UART</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar UART con paridad par</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;UPM01)  <span class="comment">; Paridad par</span><br>
+                        <span class="keyword">sts</span> <span class="register">UCSR0C</span>, <span class="register">r16</span><br><br>
+                        
+                        <span class="comment">; Configurar UART con paridad impar</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;UPM01)|(1&lt;&lt;UPM00)  <span class="comment">; Paridad impar</span><br>
+                        <span class="keyword">sts</span> <span class="register">UCSR0C</span>, <span class="register">r16</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La paridad es un método simple pero efectivo para detectar errores en la transmisión de datos
+                </div>
+            </div>
+        </div>
+        
+        <div class="bus-demo">
+            <h2>Simulador de Tipos de Comunicación</h2>
+            <p>Explora los diferentes modos de comunicación y sus características:</p>
+            
+            <div class="bus-visualization">
+                <div class="bus-diagram">
+                    <h3>Visualización de Comunicación</h3>
+                    <div class="bus-graphic">
+                        <div class="bus-line">
+                            <span class="bus-arrow left-arrow">→</span>
+                            Bus de Datos
+                            <span class="bus-arrow right-arrow">→</span>
+                        </div>
+                        
+                        <div class="bus-line">
+                            <span class="bus-arrow left-arrow">→</span>
+                            Bus de Direcciones
+                            <span class="bus-arrow right-arrow">→</span>
+                        </div>
+                        
+                        <div class="bus-line">
+                            <span class="bus-arrow left-arrow bidirectional-arrow">↔</span>
+                            Bus de Control
+                            <span class="bus-arrow right-arrow bidirectional-arrow">↔</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bus-config">
+                    <h3>Configuración de Comunicación</h3>
+                    
+                    <div class="bus-config-item">
+                        <h4>Modo de Comunicación</h4>
+                        <div class="config-options">
+                            <div class="config-option active" data-mode="simplex">Simplex</div>
+                            <div class="config-option" data-mode="halfduplex">Half-Duplex</div>
+                            <div class="config-option" data-mode="fullduplex">Full-Duplex</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bus-config-item">
+                        <h4>Tipo de Comunicación</h4>
+                        <div class="config-options">
+                            <div class="config-option active" data-type="serial">Serial</div>
+                            <div class="config-option" data-type="parallel">Paralelo</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bus-config-item">
+                        <h4>Sincronización</h4>
+                        <div class="config-options">
+                            <div class="config-option active" data-sync="async">Asíncrona</div>
+                            <div class="config-option" data-sync="sync">Síncrona</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bus-config-item">
+                        <h4>Detección de Errores</h4>
+                        <div class="config-options">
+                            <div class="config-option" data-parity="none">Sin paridad</div>
+                            <div class="config-option" data-parity="even">Paridad Par</div>
+                            <div class="config-option" data-parity="odd">Paridad Impar</div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" id="simulate-btn">
+                        <i class="fas fa-play"></i> Simular Comunicación
+                    </button>
+                    
+                    <div class="operation-log" id="operation-log">
+                        > Sistema inicializado<br>
+                        > Modo: Simplex, Serial, Asíncrono
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Guía Completa
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de Comunicación
+        document.addEventListener('DOMContentLoaded', function() {
+            const modeOptions = document.querySelectorAll('[data-mode]');
+            const typeOptions = document.querySelectorAll('[data-type]');
+            const syncOptions = document.querySelectorAll('[data-sync]');
+            const parityOptions = document.querySelectorAll('[data-parity]');
+            const simulateBtn = document.getElementById('simulate-btn');
+            const operationLog = document.getElementById('operation-log');
+            const busLines = document.querySelectorAll('.bus-line');
+            const arrows = document.querySelectorAll('.bus-arrow');
+            
+            let currentMode = 'simplex';
+            let currentType = 'serial';
+            let currentSync = 'async';
+            let currentParity = 'none';
+            
+            // Configurar eventos para los botones de opción
+            function setupOptionButtons(options, category) {
+                options.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const value = this.getAttribute('data-' + category);
+                        
+                        // Quitar clase active de todos
+                        options.forEach(opt => opt.classList.remove('active'));
+                        // Añadir clase active al seleccionado
+                        this.classList.add('active');
+                        
+                        // Actualizar valor actual
+                        if (category === 'mode') currentMode = value;
+                        if (category === 'type') currentType = value;
+                        if (category === 'sync') currentSync = value;
+                        if (category === 'parity') currentParity = value;
+                        
+                        updateLog();
+                    });
+                });
+            }
+            
+            // Configurar todos los grupos de opciones
+            setupOptionButtons(modeOptions, 'mode');
+            setupOptionButtons(typeOptions, 'type');
+            setupOptionButtons(syncOptions, 'sync');
+            setupOptionButtons(parityOptions, 'parity');
+            
+            // Actualizar log
+            function updateLog() {
+                let modeText = currentMode === 'simplex' ? 'Simplex' : 
+                              currentMode === 'halfduplex' ? 'Half-Duplex' : 'Full-Duplex';
+                              
+                let typeText = currentType === 'serial' ? 'Serial' : 'Paralelo';
+                let syncText = currentSync === 'async' ? 'Asíncrono' : 'Síncrono';
+                let parityText = currentParity === 'none' ? 'Sin paridad' :
+                                currentParity === 'even' ? 'Paridad Par' : 'Paridad Impar';
+                
+                operationLog.innerHTML = `> Modo: ${modeText}, ${typeText}, ${syncText}<br>`;
+                operationLog.innerHTML += `> Detección de errores: ${parityText}`;
+            }
+            
+            // Simular comunicación
+            simulateBtn.addEventListener('click', function() {
+                // Animación de buses según el modo
+                arrows.forEach(arrow => {
+                    arrow.style.animation = 'none';
+                    void arrow.offsetWidth; // Reiniciar animación
+                    
+                    if (currentMode === 'simplex') {
+                        arrow.classList.remove('bidirectional-arrow');
+                        arrow.textContent = '→';
+                    } else if (currentMode === 'halfduplex') {
+                        arrow.classList.add('bidirectional-arrow');
+                        arrow.textContent = '↔';
+                    } else if (currentMode === 'fullduplex') {
+                        arrow.classList.remove('bidirectional-arrow');
+                        arrow.textContent = '↔';
+                    }
+                    
+                    arrow.style.animation = 'pulse 1s infinite';
+                });
+                
+                // Mensaje de simulación
+                let message = '0x' + Math.floor(Math.random() * 256).toString(16).toUpperCase();
+                
+                if (currentParity !== 'none') {
+                    // Simular cálculo de paridad (simplificado)
+                    const ones = message.split('').filter(bit => bit === '1').length;
+                    const parityBit = currentParity === 'even' ? (ones % 2) : ((ones + 1) % 2);
+                    message += ' (P=' + parityBit + ')';
+                }
+                
+                operationLog.innerHTML += `<br>> Transmitiendo: ${message}`;
+                operationLog.scrollTop = operationLog.scrollHeight;
+                
+                if (currentMode !== 'simplex') {
+                    setTimeout(() => {
+                        operationLog.innerHTML += `<br>> Recibido: ${message}`;
+                        operationLog.scrollTop = operationLog.scrollHeight;
+                    }, 800);
+                }
+            });
+            
+            // Inicializar
+            updateLog();
+        });
+    </script>
+</body>
+</html>

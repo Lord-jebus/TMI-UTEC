@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de Sensores</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c2461, #1e3799, #4a69bd);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.4em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 20px;
+            min-height: 320px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            font-size: 1.2em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 10px;
+            padding-left: 22px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.3em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.9em;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .sensor-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .sensor-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .sensor-categories {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .category-btn {
+            padding: 10px 20px;
+            background: #e9ecef;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .category-btn.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        .sensor-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .sensor-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .sensor-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .sensor-icon {
+            font-size: 2.5em;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+        
+        .sensor-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .sensor-desc {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .sensor-gallery {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Guía de Sensores</h1>
+            <p class="subtitle">Descubre los diferentes tipos de sensores, sus principios de funcionamiento y aplicaciones en automatización y robótica</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción a los Sensores</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es un Sensor?</h3>
+                    <ul>
+                        <li>Dispositivo que detecta magnitudes físicas o químicas</li>
+                        <li>Convierte la magn medida en señal eléctrica utilizable</li>
+                        <li>Componente esencial en sistemas de automatización</li>
+                        <li>"Sentidos" de los sistemas automatizados y robots</li>
+                    </ul>
+                    
+                    <h3>Características Principales</h3>
+                    <ul>
+                        <li>Rango de medida: Límites dentro de los cuales puede operar</li>
+                        <li>Precisión: Grado de aproximación al valor real</li>
+                        <li>Resolución: Cambio mínimo que puede detectar</li>
+                        <li>Linealidad: Constancia de la relación entrada-salida</li>
+                        <li>Respuesta temporal: Tiempo que tarda en responder</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los sensores permiten a los sistemas automatizados interactuar con el entorno
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Sensores de Posición</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Tipos de Sensores de Posición</h3>
+                    <ul>
+                        <li>Potenciómetros: Convierten posición angular en resistencia</li>
+                        <li>Encoder: Miden posición y velocidad angular</li>
+                        <li>LVDT (Transformador Diferencial Variable Lineal): Precisión micrométrica</li>
+                        <li>Sensores Hall: Detectan posición mediante campo magnético</li>
+                        <li>Finales de Carrera: Detectan presencia en posición límite</li>
+                    </ul>
+                    
+                    <h3>Aplicaciones</h3>
+                    <ul>
+                        <li>Control de posición en motores y actuadores</li>
+                        <li>Sistemas de medición y calibración</li>
+                        <li>Robótica: Posicionamiento de articulaciones</li>
+                        <li>Automoción: Posición del acelerador, pedales</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los encoders pueden ser incrementales o absolutos, ópticos o magnéticos
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Sensores de Temperatura</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Principales Tecnologías</h3>
+                    <ul>
+                        <li>Termopares: Basados en efecto Seebeck, amplio rango</li>
+                        <li>RTD (Detectores de Temperatura por Resistencia): Precisos y estables</li>
+                        <li>Termistores NTC y PTC: Gran sensibilidad en rangos limitados</li>
+                        <li>Sensores IC: Integrados, lineales y fáciles de usar</li>
+                        <li>Pirómetros: Medición sin contacto a distancia</li>
+                    </ul>
+                    
+                    <h3>Aplicaciones</h3>
+                    <ul>
+                        <li>Control de clima y HVAC</li>
+                        <li>Procesos industriales: Hornos, intercambiadores</li>
+                        <li>Electrónica: Protección contra sobrecalentamiento</li>
+                        <li>Automoción: Temperatura del motor, aire acondicionado</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los termopares tipo K son los más comunes, con rango de -200°C a +1350°C
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Sensores de Proximidad</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Tipos de Sensores de Proximidad</h3>
+                    <ul>
+                        <li>Inductivos: Detectan metales sin contacto físico</li>
+                        <li>Capacitivos: Detectan materiales conductivos y no conductivos</li>
+                        <li>Ultrasónicos: Usan ondas sonoras de alta frecuencia</li>
+                        <li>Ópticos: Emisor y receptor de luz (infrarrojos typically)</li>
+                        <li>Magnéticos: Detectan imanes permanentes</li>
+                    </ul>
+                    
+                    <h3>Aplicaciones</h3>
+                    <ul>
+                        <li>Detección de objetos en cintas transportadoras</li>
+                        <li>Conteo de piezas y control de inventario</li>
+                        <li>Seguridad: Detección de presencia en áreas restringidas</li>
+                        <li>Parada de emergencia en maquinaria</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los sensores inductivos solo detectan metales, los capacitivos detectan más materiales
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Sensores de Fuerza y Presión</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Tipos de Sensores</h3>
+                    <ul>
+                        <li>Galgas extensométricas: Cambian resistencia con deformación</li>
+                        <li>Piezoeléctricos: Generan carga eléctrica bajo presión</li>
+                        <li>Sensor de carga (Load Cell): Para medición precisa de peso</li>
+                        <li>Sensor capacitivo de presión: Basado en cambio de capacitancia</li>
+                        <li>Sensor piezorresistivo: Cambio de resistencia con presión</li>
+                    </ul>
+                    
+                    <h3>Aplicaciones</h3>
+                    <ul>
+                        <li>Básculas y sistemas de pesaje</li>
+                        <li>Control de procesos industriales</li>
+                        <li>Monitoreo estructural: Puentes, edificios</li>
+                        <li>Biomédica: Monitoreo de presión arterial</li>
+                        <li>Automoción: Presión de neumáticos, frenos</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Las galgas extensométricas suelen organizarse en configuraciones de puente de Wheatstone
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Sensores de Velocidad y Aceleración</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Tipos de Sensores</h3>
+                    <ul>
+                        <li>Tacómetros: Miden velocidad de rotación (RPM)</li>
+                        <li>Acelerómetros: Miden aceleración lineal y vibración</li>
+                        <li>Giroscopios: Miden velocidad angular y orientación</li>
+                        <li>Encoder: También pueden medir velocidad</li>
+                        <li>Sensores de efecto Hall: Para velocidad rotacional</li>
+                    </ul>
+                    
+                    <h3>Aplicaciones</h3>
+                    <ul>
+                        <li>Control de motores y drones</li>
+                        <li>Sistemas de navegación y estabilización</li>
+                        <li>Dispositivos móviles: Detección de movimiento</li>
+                        <li>Automoción: Control de estabilidad, airbags</li>
+                        <li>Monitoreo de vibraciones en maquinaria</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los IMU (Unidades de Medición Inercial) combinan acelerómetros y giroscopios
+                </div>
+            </div>
+            
+            <!-- Presentación 7 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Sensores Ópticos y de Visión</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Tipos de Sensores Ópticos</h3>
+                    <ul>
+                        <li>Fotodiodos y fototransistores: Detectan presencia de luz</li>
+                        <li>Sensores de color: Detectan y diferencian colores</li>
+                        <li>Sensores de contraste: Diferencian entre superficies claras y oscuras</li>
+                        <li>Sensores de luz ambiental: Ajustan brillo de pantallas</li>
+                        <li>Cámaras: Visión artificial para inspección y reconocimiento</li>
+                    </ul>
+                    
+                    <h3>Aplicaciones</h3>
+                    <ul>
+                        <li>Detectores de humo y seguridad</li>
+                        <li>Sistemas de conteo y clasificación</li>
+                        <li>Control de calidad en producción</li>
+                        <li>Robótica: Navegación y reconocimiento de objetos</li>
+                        <li>Dispositivos electrónicos: Ajuste automático de brillo</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los sensores de visión artificial pueden identificar defectos imperceptibles para el ojo humano
+                </div>
+            </div>
+            
+            <!-- Presentación 8 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Sensores de Humedad y Gases</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Tipos de Sensores</h3>
+                    <ul>
+                        <li>Sensores de humedad capacitivos: Basados en cambio dieléctrico</li>
+                        <li>Sensores de humedad resistivos: Cambio de resistencia con humedad</li>
+                        <li>Sensores de gas semiconductor: Detectan gases combustibles</li>
+                        <li>Sensores electroquímicos: Para gases tóxicos como CO</li>
+                        <li>Sensores infrarrojos: Detectan CO2 y gases específicos</li>
+                    </ul>
+                    
+                    <h3>Aplicaciones</h3>
+                    <ul>
+                        <li>Control de clima y HVAC</li>
+                        <li>Agricultura: Invernaderos y control de riego</li>
+                        <li>Seguridad industrial: Detección de fugas</li>
+                        <li>Domótica: Control de calidad del aire interior</li>
+                        <li>Alimentación: Control de almacenamiento de productos</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los sensores de humedad relativa suelen expresar valores entre 0% y 100% HR
+                </div>
+            </div>
+            
+            <!-- Presentación 9 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Sensores de Nivel y Caudal</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Tipos de Sensores</h3>
+                    <ul>
+                        <li>Sensores de nivel por flotador: Mecánicos, simples y confiables</li>
+                        <li>Sensores de nivel capacitivos: Para líquidos y sólidos</li>
+                        <li>Sensores ultrasónicos: Medición sin contacto</li>
+                        <li>Sensores de presión hidrostática: Calculan nivel por presión</li>
+                        <li>Medidores de caudal: Turbina, magnéticos, ultrasónicos</li>
+                    </ul>
+                    
+                    <h3>Aplicaciones</h3>
+                    <ul>
+                        <li>Control de tanques y depósitos</li>
+                        <li>Industria química y petroquímica</li>
+                        <li>Tratamiento de aguas: Control de niveles</li>
+                        <li>Sistemas de riego y agricultura</li>
+                        <li>Medición de consumo en sistemas de fluidos</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los medidores de caudal magnéticos son ideales para líquidos conductivos
+                </div>
+            </div>
+            
+            <!-- Presentación 10 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Selección y Aplicación de Sensores</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Criterios de Selección</h3>
+                    <ul>
+                        <li>Rango de medida: Debe cubrir todos los valores esperados</li>
+                        <li>Precisión y resolución: Adecuadas para la aplicación</li>
+                        <li>Condiciones ambientales: Temperatura, humedad, vibraciones</li>
+                        <li>Tipo de salida: Analógica, digital, protocolos de comunicación</li>
+                        <li>Costo y disponibilidad: Factores económicos y prácticos</li>
+                    </ul>
+                    
+                    <h3>Consideraciones de Instalación</h3>
+                    <ul>
+                        <li>Ubicación: Punto de medida representativo</li>
+                        <li>Montaje: Fijación adecuada para evitar vibraciones</li>
+                        <li>Cableado: Blindaje contra interferencias</li>
+                        <li>Calibración: Ajuste periódico según recomendaciones</li>
+                        <li>Mantenimiento: Limpieza y verificación regular</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La correcta selección e instalación es crucial para un funcionamiento fiable
+                </div>
+            </div>
+        </div>
+        
+        <div class="sensor-demo">
+            <h2>Galería de Sensores</h2>
+            <p>Explora los diferentes tipos de sensores y sus aplicaciones:</p>
+            
+            <div class="sensor-categories">
+                <div class="category-btn active" data-category="all">Todos</div>
+                <div class="category-btn" data-category="position">Posición</div>
+                <div class="category-btn" data-category="temperature">Temperatura</div>
+                <div class="category-btn" data-category="proximity">Proximidad</div>
+                <div class="category-btn" data-category="force">Fuerza/Presión</div>
+                <div class="category-btn" data-category="optical">Ópticos</div>
+            </div>
+            
+            <div class="sensor-gallery">
+                <div class="sensor-card" data-category="position">
+                    <div class="sensor-icon"><i class="fas fa-compass"></i></div>
+                    <div class="sensor-name">Encoder Rotatorio</div>
+                    <div class="sensor-desc">Mide posición y velocidad angular con alta precisión</div>
+                </div>
+                
+                <div class="sensor-card" data-category="position">
+                    <div class="sensor-icon"><i class="fas fa-ruler-combined"></i></div>
+                    <div class="sensor-name">LVDT</div>
+                    <div class="sensor-desc">Sensor de desplazamiento lineal de alta precisión</div>
+                </div>
+                
+                <div class="sensor-card" data-category="temperature">
+                    <div class="sensor-icon"><i class="fas fa-thermometer-half"></i></div>
+                    <div class="sensor-name">Termopar Tipo K</div>
+                    <div class="sensor-desc">Amplio rango de temperatura (-200°C a +1350°C)</div>
+                </div>
+                
+                <div class="sensor-card" data-category="temperature">
+                    <div class="sensor-icon"><i class="fas fa-temperature-high"></i></div>
+                    <div class="sensor-name">Termistor NTC</div>
+                    <div class="sensor-desc">Alta sensibilidad en rangos limitados de temperatura</div>
+                </div>
+                
+                <div class="sensor-card" data-category="proximity">
+                    <div class="sensor-icon"><i class="fas fa-magnet"></i></div>
+                    <div class="sensor-name">Sensor Inductivo</div>
+                    <div class="sensor-desc">Detecta metales sin contacto físico</div>
+                </div>
+                
+                <div class="sensor-card" data-category="proximity">
+                    <div class="sensor-icon"><i class="fas fa-broadcast-tower"></i></div>
+                    <div class="sensor-name">Sensor Ultrasónico</div>
+                    <div class="sensor-desc">Medición de distancia mediante ondas sonoras</div>
+                </div>
+                
+                <div class="sensor-card" data-category="force">
+                    <div class="sensor-icon"><i class="fas fa-weight-hanging"></i></div>
+                    <div class="sensor-name">Celda de Carga</div>
+                    <div class="sensor-desc">Sensor de fuerza para sistemas de pesaje</div>
+                </div>
+                
+                <div class="sensor-card" data-category="force">
+                    <div class="sensor-icon"><i class="fas fa-tachometer-alt"></i></div>
+                    <div class="sensor-name">Sensor de Presión</div>
+                    <div class="sensor-desc">Mide presión de fluidos y gases</div>
+                </div>
+                
+                <div class="sensor-card" data-category="optical">
+                    <div class="sensor-icon"><i class="fas fa-lightbulb"></i></div>
+                    <div class="sensor-name">Fototransistor</div>
+                    <div class="sensor-desc">Detecta presencia/intensidad de luz</div>
+                </div>
+                
+                <div class="sensor-card" data-category="optical">
+                    <div class="sensor-icon"><i class="fas fa-eye"></i></div>
+                    <div class="sensor-name">Sensor de Color</div>
+                    <div class="sensor-desc">Identifica y diferencia colores</div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Guía Completa de Sensores
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Filtrado de sensores por categoría
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryButtons = document.querySelectorAll('.category-btn');
+            const sensorCards = document.querySelectorAll('.sensor-card');
+            
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    
+                    // Quitar clase active de todos los botones
+                    categoryButtons.forEach(btn => btn.classList.remove('active'));
+                    // Añadir clase active al botón seleccionado
+                    this.classList.add('active');
+                    
+                    // Mostrar/ocultar sensores según categoría
+                    sensorCards.forEach(card => {
+                        if (category === 'all' || card.getAttribute('data-category') === category) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

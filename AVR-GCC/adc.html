@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADC en ATmega328P con AVR-GCC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #141E30, #243B55);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 25px;
+            min-height: 350px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 18px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .adc-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .adc-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .adc-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .input-section, .output-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 300px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .slider-container {
+            margin: 20px 0;
+        }
+        
+        .slider {
+            width: 100%;
+            margin: 15px 0;
+        }
+        
+        .value-display {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #3498db;
+            margin: 10px 0;
+        }
+        
+        .voltage-bar {
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            margin: 20px 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .voltage-level {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .binary-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            letter-spacing: 3px;
+            background: #2d3e50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .register-display {
+            text-align: left;
+            margin: 15px 0;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .adc-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .input-section, .output-section {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ADC en ATmega328P con AVR-GCC</h1>
+            <p class="subtitle">Aprende a utilizar el Convertidor Analógico-Digital (ADC) con el microcontrolador ATmega328P programado en C usando AVR-GCC</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción al ADC</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es un ADC?</h3>
+                    <ul>
+                        <li>Convertidor Analógico-Digital (Analog-to-Digital Converter)</li>
+                        <li>Convierte señales analógicas a valores digitales</li>
+                        <li>Esencial para leer sensores (temperatura, luz, potenciómetros)</li>
+                        <li>El ATmega328P tiene un ADC de 10 bits</li>
+                    </ul>
+                    
+                    <h3>Características del ADC</h3>
+                    <ul>
+                        <li>Resolución de 10 bits (1024 valores)</li>
+                        <li>6 canales multiplexados (ADC0 a ADC5)</li>
+                        <li>Rango de voltaje: 0V a Vref (5V o referencia interna)</li>
+                        <li>Conversión single-ended o diferencial</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El ADC es una de las periferias más usadas en aplicaciones embebidas
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Registros del ADC</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Registros principales</h3>
+                    <ul>
+                        <li>ADMUX - ADC Multiplexer Selection Register</li>
+                        <li>ADCSRA - ADC Control and Status Register A</li>
+                        <li>ADCL/ADCH - ADC Data Register (Low/High)</li>
+                        <li>DIDR0 - Digital Input Disable Register 0</li>
+                    </ul>
+                    
+                    <h3>Configuración de ADMUX</h3>
+                    <ul>
+                        <li>REFS1:0 - Selección de voltaje de referencia</li>
+                        <li>ADLAR - Ajuste a izquierda del resultado</li>
+                        <li>MUX3:0 - Selección de canal analógico</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    ADCSRA controla el habilitado, inicio de conversión y preescaler
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Inicialización del ADC</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Configuración básica</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Inicializar ADC</span><br>
+                        <span class="keyword">void</span> <span class="function">adc_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Referencia AVcc, canal ADC0</span><br>
+                        &nbsp;&nbsp;ADMUX = (1 &lt;&lt; REFS0);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Habilitar ADC, preescaler de 128</span><br>
+                        &nbsp;&nbsp;<span class="comment">// 16MHz/128 = 125kHz (dentro de 50-200kHz recomendado)</span><br>
+                        &nbsp;&nbsp;ADCSRA = (1 &lt;&lt; ADEN) | (1 &lt;&lt; ADPS2) | (1 &lt;&lt; ADPS1) | (1 &lt;&lt; ADPS0);<br>
+                        }
+                    </div>
+                    
+                    <h3>Opciones de referencia</h3>
+                    <ul>
+                        <li>AREF - Voltaje externo</li>
+                        <li>AVcc - Voltaje de alimentación (5V)</li>
+                        <li>Interno - Referencia interna de 1.1V</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Frecuencia de reloj del ADC debe estar entre 50kHz y 200kHz para máxima resolución
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Lectura Analógica</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Función de lectura ADC</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Leer valor ADC de un canal</span><br>
+                        <span class="keyword">uint16_t</span> <span class="function">adc_read</span>(<span class="keyword">uint8_t</span> channel) {<br>
+                        &nbsp;&nbsp;<span class="comment">// Seleccionar canal</span><br>
+                        &nbsp;&nbsp;ADMUX = (ADMUX &amp; 0xF0) | (channel &amp; 0x0F);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Iniciar conversión</span><br>
+                        &nbsp;&nbsp;ADCSRA |= (1 &lt;&lt; ADSC);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Esperar fin de conversión</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (ADCSRA &amp; (1 &lt;&lt; ADSC));<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Devolver resultado (leer ADCL primero)</span><br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> ADC;<br>
+                        }
+                    </div>
+                    
+                    <h3>Canales ADC</h3>
+                    <ul>
+                        <li>ADC0 - Pin PC0</li>
+                        <li>ADC1 - Pin PC1</li>
+                        <li>ADC2 - Pin PC2</li>
+                        <li>ADC3 - Pin PC3</li>
+                        <li>ADC4 - Pin PC4 (SDA)</li>
+                        <li>ADC5 - Pin PC5 (SCL)</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Leer ADCL primero y luego ADCH para asegurar consistencia
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Modo de Conversión Continua</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Auto-Trigger y Interrupciones</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Inicializar ADC con auto-trigger</span><br>
+                        <span class="keyword">void</span> <span class="function">adc_init_auto</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Referencia AVcc, canal ADC0</span><br>
+                        &nbsp;&nbsp;ADMUX = (1 &lt;&lt; REFS0);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Habilitar ADC, auto-trigger, interrupción, preescaler 128</span><br>
+                        &nbsp;&nbsp;ADCSRA = (1 &lt;&lt; ADEN) | (1 &lt;&lt; ADATE) | (1 &lt;&lt; ADIE) |<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(1 &lt;&lt; ADPS2) | (1 &lt;&lt; ADPS1) | (1 &lt;&lt; ADPS0);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Free Running mode</span><br>
+                        &nbsp;&nbsp;ADCSRB = 0;<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Habilitar interrupciones globales</span><br>
+                        &nbsp;&nbsp;sei();<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Iniciar primera conversión</span><br>
+                        &nbsp;&nbsp;ADCSRA |= (1 &lt;&lt; ADSC);<br>
+                        }
+                    </div>
+                    
+                    <h3>Rutina de interrupción</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// ISR para conversión completa</span><br>
+                        ISR(ADC_vect) {<br>
+                        &nbsp;&nbsp;<span class="keyword">uint16_t</span> adc_value = ADC;<br>
+                        &nbsp;&nbsp;<span class="comment">// Procesar valor leído</span><br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El modo auto-trigger permite conversiones continuas sin intervención del CPU
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Ejemplo Completo</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Lectura de potenciómetro</h3>
+                    
+                    <div class="code-block">
+                        <span class="keyword">#include</span> &lt;avr/io.h&gt;<br>
+                        <span class="keyword">#include</span> &lt;util/delay.h&gt;<br>
+                        <span class="keyword">#include</span> &lt;stdio.h&gt;<br><br>
+                        
+                        <span class="comment">// Inicializar ADC</span><br>
+                        <span class="keyword">void</span> <span class="function">adc_init</span>() {<br>
+                        &nbsp;&nbsp;ADMUX = (1 &lt;&lt; REFS0);<br>
+                        &nbsp;&nbsp;ADCSRA = (1 &lt;&lt; ADEN) | (1 &lt;&lt; ADPS2) | (1 &lt;&lt; ADPS1) | (1 &lt;&lt; ADPS0);<br>
+                        }<br><br>
+                        
+                        <span class="comment">// Leer canal ADC</span><br>
+                        <span class="keyword">uint16_t</span> <span class="function">adc_read</span>(<span class="keyword">uint8_t</span> channel) {<br>
+                        &nbsp;&nbsp;ADMUX = (ADMUX &amp; 0xF0) | (channel &amp; 0x0F);<br>
+                        &nbsp;&nbsp;ADCSRA |= (1 &lt;&lt; ADSC);<br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (ADCSRA &amp; (1 &lt;&lt; ADSC));<br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> ADC;<br>
+                        }<br><br>
+                        
+                        <span class="keyword">int</span> <span class="function">main</span>(<span class="keyword">void</span>) {<br>
+                        &nbsp;&nbsp;adc_init();<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar UART para debug (opcional)</span><br><br>
+                        
+                        &nbsp;&nbsp;<span class="keyword">while</span> (1) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">uint16_t</span> valor = adc_read(0);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Convertir a voltaje (asumiendo Vref=5V)</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">float</span> voltaje = valor * (5.0 / 1023.0);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;_delay_ms(500);<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Compilar con: avr-gcc -mmcu=atmega328p -Os adc.c -o adc.elf
+                </div>
+            </div>
+        </div>
+        
+        <div class="adc-demo">
+            <h2>Simulador de ADC</h2>
+            <p>Ajusta el voltaje de entrada y observa la conversión analógica-digital:</p>
+            
+            <div class="adc-visualization">
+                <div class="input-section">
+                    <h3>Entrada Analógica</h3>
+                    <div class="slider-container">
+                        <label for="voltage-slider">Voltaje de entrada: <span id="voltage-value">2.50</span>V</label>
+                        <input type="range" id="voltage-slider" class="slider" min="0" max="5" step="0.01" value="2.5">
+                    </div>
+                    
+                    <div class="voltage-bar">
+                        <div class="voltage-level" id="voltage-level"></div>
+                    </div>
+                    
+                    <p>Voltaje de referencia: <span class="highlight">5.00V</span></p>
+                </div>
+                
+                <div class="output-section">
+                    <h3>Salida Digital</h3>
+                    <p>Valor ADC (10 bits):</p>
+                    <div class="value-display" id="adc-value">512</div>
+                    
+                    <p>Representación binaria:</p>
+                    <div class="binary-display" id="binary-value">1000000000</div>
+                    
+                    <div class="register-display">
+                        <p>ADCH: <span id="adch-value">0x02</span></p>
+                        <p>ADCL: <span id="adcl-value">0x00</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn" id="read-btn">
+                <i class="fas fa-sync-alt"></i> Realizar Conversión
+            </button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de ADC
+        const voltageSlider = document.getElementById('voltage-slider');
+        const voltageValue = document.getElementById('voltage-value');
+        const voltageLevel = document.getElementById('voltage-level');
+        const adcValue = document.getElementById('adc-value');
+        const binaryValue = document.getElementById('binary-value');
+        const adchValue = document.getElementById('adch-value');
+        const adclValue = document.getElementById('adcl-value');
+        const readBtn = document.getElementById('read-btn');
+        
+        // Actualizar visualización al cambiar el slider
+        voltageSlider.addEventListener('input', function() {
+            const voltage = parseFloat(this.value);
+            voltageValue.textContent = voltage.toFixed(2);
+            
+            // Actualizar barra de voltaje
+            const percentage = (voltage / 5) * 100;
+            voltageLevel.style.width = percentage + '%';
+            
+            // Realizar conversión
+            performConversion(voltage);
+        });
+        
+        // Realizar conversión ADC
+        function performConversion(voltage) {
+            // Calcular valor ADC (0-1023)
+            const adcResult = Math.round((voltage / 5) * 1023);
+            adcValue.textContent = adcResult;
+            
+            // Calcular valores de registros
+            const adch = (adcResult >> 8) & 0x03; // 2 bits más significativos
+            const adcl = adcResult & 0xFF;         // 8 bits menos significativos
+            
+            adchValue.textContent = '0x' + adch.toString(16).padStart(2, '0').toUpperCase();
+            adclValue.textContent = '0x' + adcl.toString(16).padStart(2, '0').toUpperCase();
+            
+            // Mostrar representación binaria (10 bits)
+            const binaryString = adcResult.toString(2).padStart(10, '0');
+            binaryValue.textContent = binaryString;
+        }
+        
+        // Inicializar visualización
+        voltageSlider.dispatchEvent(new Event('input'));
+        
+        // Animación al hacer clic en el botón
+        readBtn.addEventListener('click', function() {
+            this.classList.add('clicked');
+            setTimeout(() => {
+                this.classList.remove('clicked');
+            }, 500);
+            
+            // Forzar nueva conversión
+            voltageSlider.dispatchEvent(new Event('input'));
+        });
+    </script>
+</body>
+</html>

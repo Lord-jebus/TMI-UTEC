@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWM con ATmega328P y AVR-GCC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 25px;
+            min-height: 350px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 18px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .pwm-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .pwm-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .slider-container {
+            margin: 20px 0;
+        }
+        
+        .slider {
+            width: 80%;
+            margin: 15px 0;
+        }
+        
+        .led-visualization {
+            width: 100px;
+            height: 100px;
+            background: #eee;
+            border-radius: 50%;
+            margin: 20px auto;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+            transition: background 0.2s;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Configuración PWM en ATmega328P con AVR-GCC</h1>
+            <p class="subtitle">Aprende a utilizar Modulación por Ancho de Pulso (PWM) con el microcontrolador ATmega328P programado en C usando AVR-GCC</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción al PWM</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es PWM?</h3>
+                    <ul>
+                        <li>Modulación por Ancho de Pulso (Pulse Width Modulation)</li>
+                        <li>Técnica para simular una señal analógica con digital</li>
+                        <li>Controla la potencia entregada a cargas</li>
+                        <li>Usado en control de motores, regulación de luz, etc.</li>
+                    </ul>
+                    
+                    <h3>Parámetros del PWM</h3>
+                    <ul>
+                        <li>Frecuencia: ciclos por segundo (Hz)</li>
+                        <li>Resolución: precisión del duty cycle (bits)</li>
+                        <li>Duty Cycle: porcentaje de tiempo en alto</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El ATmega328P tiene 6 canales PWM (3 por cada timer)
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Timers del ATmega328P</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Timers disponibles</h3>
+                    <ul>
+                        <li>Timer0 - 8 bits (PWM en pines 5 y 6)</li>
+                        <li>Timer1 - 16 bits (PWM en pines 9 y 10)</li>
+                        <li>Timer2 - 8 bits (PWM en pines 3 y 11)</li>
+                    </ul>
+                    
+                    <h3>Registros importantes</h3>
+                    <ul>
+                        <li>TCCRxA/B - Control del timer</li>
+                        <li>TCNTx - Contador del timer</li>
+                        <li>OCRxA/B - Registros de comparación</li>
+                        <li>TIMSKx - Interrupciones del timer</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Cada timer puede generar dos señales PWM independientes
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Configuración Básica</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Inicialización de PWM</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Inicializar PWM en Timer1</span><br>
+                        <span class="keyword">void</span> <span class="function">pwm_init</span>() {<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar OC1A (Pin 9) como salida</span><br>
+                        &nbsp;&nbsp;DDRB |= (1 &lt;&lt; DDB1);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Modo Fast PWM, top en ICR1</span><br>
+                        &nbsp;&nbsp;TCCR1A |= (1 &lt;&lt; WGM11);<br>
+                        &nbsp;&nbsp;TCCR1B |= (1 &lt;&lt; WGM12) | (1 &lt;&lt; WGM13);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Prescaler de 8</span><br>
+                        &nbsp;&nbsp;TCCR1B |= (1 &lt;&lt; CS11);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Modo no invertido</span><br>
+                        &nbsp;&nbsp;TCCR1A |= (1 &lt;&lt; COM1A1);<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    ICR1 define el valor TOP para el Timer1 (frecuencia)
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Modos PWM</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Modos de operación</h3>
+                    <ul>
+                        <li>Fast PWM: Mayor frecuencia, reset en TOP</li>
+                        <li>Phase Correct PWM: Mayor precisión, simétrico</li>
+                        <li>Phase and Frequency Correct: Más preciso</li>
+                    </ul>
+                    
+                    <h3>Configuración de modos</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Configurar modo Fast PWM</span><br>
+                        TCCR1A |= (1 &lt;&lt; WGM10) | (1 &lt;&lt; WGM11);<br>
+                        TCCR1B |= (1 &lt;&lt; WGM12);<br><br>
+                        
+                        <span class="comment">// Configurar modo Phase Correct PWM</span><br>
+                        TCCR1A |= (1 &lt;&lt; WGM10);<br>
+                        TCCR1B |= (1 &lt;&lt; WGM13);
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Los bits WGM en TCCRxA y TCCRxB controlan el modo
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Frecuencia y Duty Cycle</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Cálculo de frecuencia</h3>
+                    <ul>
+                        <li>Frecuencia = F_CPU / (Prescaler * (TOP + 1))</li>
+                        <li>TOP define la resolución del PWM</li>
+                        <li>Prescaler: 1, 8, 64, 256, 1024</li>
+                    </ul>
+                    
+                    <h3>Configuración de frecuencia</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Configurar frecuencia a 1kHz</span><br>
+                        <span class="comment">// F_CPU = 16MHz, Prescaler = 8</span><br>
+                        <span class="define">#define</span> PWM_TOP 1999 <span class="comment">// 16000000/(8*1000) - 1</span><br><br>
+                        
+                        ICR1 = PWM_TOP;<br>
+                        OCR1A = PWM_TOP / 2; <span class="comment">// 50% duty cycle</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Para cambiar el duty cycle, modificar OCR1A/OCR1B
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Ejemplo Completo</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>PWM en Pin 9 (OC1A)</h3>
+                    
+                    <div class="code-block">
+                        <span class="keyword">#include</span> &lt;avr/io.h&gt;<br>
+                        <span class="keyword">#include</span> &lt;util/delay.h&gt;<br><br>
+                        
+                        <span class="keyword">int</span> <span class="function">main</span>(<span class="keyword">void</span>) {<br>
+                        &nbsp;&nbsp;<span class="comment">// Configurar PWM</span><br>
+                        &nbsp;&nbsp;DDRB |= (1 &lt;&lt; PB1); <span class="comment">// Pin 9 como salida</span><br>
+                        &nbsp;&nbsp;TCCR1A = (1 &lt;&lt; COM1A1) | (1 &lt;&lt; WGM11);<br>
+                        &nbsp;&nbsp;TCCR1B = (1 &lt;&lt; WGM13) | (1 &lt;&lt; WGM12) | (1 &lt;&lt; CS11);<br>
+                        &nbsp;&nbsp;ICR1 = 1999; <span class="comment">// 1kHz</span><br><br>
+                        
+                        &nbsp;&nbsp;<span class="keyword">while</span>(1) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Variar duty cycle de 0% a 100%</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">for</span>(uint16_t i = 0; i <= 1999; i++) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OCR1A = i;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_delay_ms(2);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Compilar con: avr-gcc -mmcu=atmega328p -Os pwm.c -o pwm.elf
+                </div>
+            </div>
+        </div>
+        
+        <div class="pwm-demo">
+            <h2>Simulador de PWM</h2>
+            <p>Ajusta el duty cycle para ver cómo afecta a la intensidad de un LED:</p>
+            
+            <div class="slider-container">
+                <label for="pwm-slider">Duty Cycle: <span id="duty-value">50</span>%</label>
+                <input type="range" id="pwm-slider" class="slider" min="0" max="100" value="50">
+            </div>
+            
+            <div class="led-visualization" id="led"></div>
+            
+            <p>Valor de OCR1A: <span id="ocr-value">1000</span> (con ICR1 = 1999)</p>
+        </div>
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>        
+    </div>
+
+    <script>
+        // Simulador de PWM
+        const pwmSlider = document.getElementById('pwm-slider');
+        const dutyValue = document.getElementById('duty-value');
+        const ocrValue = document.getElementById('ocr-value');
+        const led = document.getElementById('led');
+        
+        pwmSlider.addEventListener('input', function() {
+            const dutyCycle = this.value;
+            dutyValue.textContent = dutyCycle;
+            
+            // Calcular valor de OCR1A (asumiendo ICR1 = 1999)
+            const ocr = Math.floor(dutyCycle * 19.99);
+            ocrValue.textContent = ocr;
+            
+            // Actualizar visualización del LED
+            const intensity = dutyCycle / 100;
+            const colorValue = Math.round(255 * intensity);
+            const bgColor = `rgb(${colorValue}, ${colorValue}, 0)`;
+            const boxShadow = `inset 0 0 30px rgba(0, 0, 0, ${0.5 - intensity/3}), 
+                              0 0 20px rgba(${colorValue}, ${colorValue}, 0, ${0.2 + intensity/2})`;
+            
+            led.style.backgroundColor = bgColor;
+            led.style.boxShadow = boxShadow;
+        });
+        
+        // Inicializar visualización
+        pwmSlider.dispatchEvent(new Event('input'));
+    </script>
+</body>
+</html>

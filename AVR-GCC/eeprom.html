@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EEPROM en ATmega328P con AVR-GCC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f3057, #00587a, #008891);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 25px;
+            min-height: 350px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 18px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .include {
+            color: #ae81ff;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .eeprom-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .eeprom-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .eeprom-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .memory-section, .operation-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 350px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 15px 0;
+        }
+        
+        .memory-cell {
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            position: relative;
+        }
+        
+        .memory-address {
+            font-size: 0.7em;
+            color: #6c757d;
+        }
+        
+        .memory-value {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .input-group {
+            margin: 15px 0;
+            text-align: left;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .operation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .operation-log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .eeprom-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .memory-section, .operation-section {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>EEPROM en ATmega328P con AVR-GCC</h1>
+            <p class="subtitle">Aprende a utilizar la memoria EEPROM (Electrically Erasable Programmable Read-Only Memory) con el microcontrolador ATmega328P programado en C usando AVR-GCC</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción a la EEPROM</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es la EEPROM?</h3>
+                    <ul>
+                        <li>Memoria no volátil (conserva datos sin energía)</li>
+                        <li>Electrically Erasable Programmable Read-Only Memory</li>
+                        <li>Ideal para almacenar configuraciones y datos críticos</li>
+                        <li>Diferente a la memoria Flash y SRAM</li>
+                    </ul>
+                    
+                    <h3>Características en ATmega328P</h3>
+                    <ul>
+                        <li>1KB de capacidad (1024 bytes)</li>
+                        <li>Direccionamiento byte a byte</li>
+                        <li>100,000 ciclos de escritura (típico)</li>
+                        <li>Datos retenidos por más de 20 años</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La EEPROM es perfecta para guardar configuraciones que deben persistir
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Registros de la EEPROM</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Registros principales</h3>
+                    <ul>
+                        <li>EEARH y EEARL - EEPROM Address Register (High/Low)</li>
+                        <li>EEDR - EEPROM Data Register</li>
+                        <li>EECR - EEPROM Control Register</li>
+                    </ul>
+                    
+                    <h3>Bits de control (EECR)</h3>
+                    <ul>
+                        <li>EERE - EEPROM Read Enable</li>
+                        <li>EEPE - EEPROM Write Enable</li>
+                        <li>EEMPE - EEPROM Master Write Enable</li>
+                        <li>EEIE - EEPROM Ready Interrupt Enable</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El registro EECR controla todas las operaciones de la EEPROM
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Lectura de la EEPROM</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Proceso de lectura</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Leer un byte de la EEPROM</span><br>
+                        <span class="keyword">uint8_t</span> <span class="function">eeprom_read_byte</span>(<span class="keyword">uint16_t</span> address) {<br>
+                        &nbsp;&nbsp;<span class="comment">// Esperar a que termine cualquier escritura previa</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (EECR &amp; (1 &lt;&lt; EEPE));<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Establecer la dirección</span><br>
+                        &nbsp;&nbsp;EEAR = address;<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Iniciar lectura</span><br>
+                        &nbsp;&nbsp;EECR |= (1 &lt;&lt; EERE);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Devolver el dato leído</span><br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> EEDR;<br>
+                        }
+                    </div>
+                    
+                    <h3>Consideraciones importantes</h3>
+                    <ul>
+                        <li>Verificar que no haya escritura en proceso</li>
+                        <li>La dirección debe ser válida (0-1023)</li>
+                        <li>La lectura es no destructiva</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La lectura es más simple y rápida que la escritura
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Escritura en la EEPROM</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Proceso de escritura</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Escribir un byte en la EEPROM</span><br>
+                        <span class="keyword">void</span> <span class="function">eeprom_write_byte</span>(<span class="keyword">uint16_t</span> address, <span class="keyword">uint8_t</span> data) {<br>
+                        &nbsp;&nbsp;<span class="comment">// Esperar a que termine cualquier escritura previa</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (EECR &amp; (1 &lt;&lt; EEPE));<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Establecer dirección y dato</span><br>
+                        &nbsp;&nbsp;EEAR = address;<br>
+                        &nbsp;&nbsp;EEDR = data;<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Habilitar escritura (EEMPE debe escribirse antes que EEPE)</span><br>
+                        &nbsp;&nbsp;EECR |= (1 &lt;&lt; EEMPE);<br>
+                        &nbsp;&nbsp;EECR |= (1 &lt;&lt; EEPE);<br>
+                        }
+                    </div>
+                    
+                    <h3>Precauciones</h3>
+                    <ul>
+                        <li>La escritura consume más tiempo (3.3ms)</li>
+                        <li>Límite de ciclos de escritura (100,000)</li>
+                        <li>Interrupciones durante escritura pueden causar corrupción</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La escritura requiere una secuencia específica para evitar corrupción de datos
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Librerías AVR para EEPROM</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Librería avr/eeprom.h</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Usando las funciones de la librería AVR</span><br>
+                        <span class="include">#include</span> <span class="keyword">&lt;avr/eeprom.h&gt;</span><br><br>
+                        
+                        <span class="comment">// Funciones principales</span><br>
+                        <span class="keyword">uint8_t</span> eeprom_read_byte(<span class="keyword">const uint8_t</span> *addr);<br>
+                        <span class="keyword">void</span> eeprom_write_byte(<span class="keyword">uint8_t</span> *addr, <span class="keyword">uint8_t</span> value);<br>
+                        <span class="keyword">void</span> eeprom_update_byte(<span class="keyword">uint8_t</span> *addr, <span class="keyword">uint8_t</span> value);<br><br>
+                        
+                        <span class="comment">// Funciones para otros tipos de datos</span><br>
+                        <span class="keyword">uint16_t</span> eeprom_read_word(<span class="keyword">const uint16_t</span> *addr);<br>
+                        <span class="keyword">void</span> eeprom_write_word(<span class="keyword">uint16_t</span> *addr, <span class="keyword">uint16_t</span> value);<br>
+                        <span class="keyword">void</span> eeprom_read_block(<span class="keyword">void</span> *pointer, <span class="keyword">const void</span> *addr, <span class="keyword">size_t</span> size);<br>
+                        <span class="keyword">void</span> eeprom_write_block(<span class="keyword">const void</span> *pointer, <span class="keyword">void</span> *addr, <span class="keyword">size_t</span> size);<br>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    eeprom_update_byte() es preferible ya que solo escribe si el valor cambió
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Ejemplo Completo</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Contador persistente</h3>
+                    
+                    <div class="code-block">
+                        <span class="include">#include</span> <span class="keyword">&lt;avr/io.h&gt;</span><br>
+                        <span class="include">#include</span> <span class="keyword">&lt;avr/eeprom.h&gt;</span><br>
+                        <span class="include">#include</span> <span class="keyword">&lt;util/delay.h&gt;</span><br><br>
+                        
+                        <span class="comment">// Direcciones EEPROM para nuestros datos</span><br>
+                        <span class="define">#define</span> EEPROM_COUNTER 0x00<br>
+                        <span class="define">#define</span> EEPROM_CONFIG 0x10<br><br>
+                        
+                        <span class="keyword">int</span> <span class="function">main</span>(<span class="keyword">void</span>) {<br>
+                        &nbsp;&nbsp;<span class="comment">// Leer contador desde EEPROM</span><br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> counter = eeprom_read_byte((<span class="keyword">uint8_t</span>*)EEPROM_COUNTER);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Incrementar contador</span><br>
+                        &nbsp;&nbsp;counter++;<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Guardar nuevo valor en EEPROM (solo si cambió)</span><br>
+                        &nbsp;&nbsp;eeprom_update_byte((<span class="keyword">uint8_t</span>*)EEPROM_COUNTER, counter);<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Bucle principal (ejemplo con LED)</span><br>
+                        &nbsp;&nbsp;DDRB |= (1 &lt;&lt; PB5); <span class="comment">// LED como salida</span><br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (1) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;PORTB ^= (1 &lt;&lt; PB5); <span class="comment">// Toggle LED</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;_delay_ms(1000);<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Compilar con: avr-gcc -mmcu=atmega328p -Os eeprom.c -o eeprom.elf
+                </div>
+            </div>
+        </div>
+        
+        <div class="eeprom-demo">
+            <h2>Simulador de EEPROM</h2>
+            <p>Explora cómo leer y escribir en la memoria EEPROM:</p>
+            
+            <div class="eeprom-visualization">
+                <div class="memory-section">
+                    <h3>Memoria EEPROM (1024 bytes)</h3>
+                    <div class="memory-grid" id="memory-grid">
+                        <!-- Las celdas de memoria se generarán con JavaScript -->
+                    </div>
+                    <p>Direcciones: 0x000 - 0x3FF</p>
+                </div>
+                
+                <div class="operation-section">
+                    <h3>Operaciones</h3>
+                    
+                    <div class="input-group">
+                        <label for="address-input">Dirección (0-1023):</label>
+                        <input type="number" id="address-input" min="0" max="1023" value="0">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="data-input">Dato (0-255):</label>
+                        <input type="number" id="data-input" min="0" max="255" value="0">
+                    </div>
+                    
+                    <div class="operation-buttons">
+                        <button class="btn" id="read-btn">
+                            <i class="fas fa-book"></i> Leer
+                        </button>
+                        <button class="btn" id="write-btn">
+                            <i class="fas fa-pen"></i> Escribir
+                        </button>
+                        <button class="btn" id="clear-btn">
+                            <i class="fas fa-broom"></i> Limpiar
+                        </button>
+                    </div>
+                    
+                    <div class="operation-log" id="operation-log">
+                        > Sistema inicializado<br>
+                        > EEPROM lista para operaciones
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>       
+    </div>
+
+    <script>
+        // Simulador de EEPROM
+        const memoryGrid = document.getElementById('memory-grid');
+        const addressInput = document.getElementById('address-input');
+        const dataInput = document.getElementById('data-input');
+        const readBtn = document.getElementById('read-btn');
+        const writeBtn = document.getElementById('write-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const operationLog = document.getElementById('operation-log');
+        
+        // Simular memoria EEPROM (1024 bytes)
+        const eepromMemory = new Array(1024).fill(0);
+        
+        // Generar la cuadrícula de memoria
+        function generateMemoryGrid() {
+            memoryGrid.innerHTML = '';
+            for (let i = 0; i < 16; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'memory-cell';
+                cell.innerHTML = `
+                    <div class="memory-address">0x${i.toString(16).toUpperCase().padStart(3, '0')}</div>
+                    <div class="memory-value" id="mem-${i}">${eepromMemory[i].toString(16).toUpperCase().padStart(2, '0')}</div>
+                `;
+                memoryGrid.appendChild(cell);
+            }
+        }
+        
+        // Actualizar visualización de memoria
+        function updateMemoryDisplay() {
+            for (let i = 0; i < 16; i++) {
+                document.getElementById(`mem-${i}`).textContent = 
+                    eepromMemory[i].toString(16).toUpperCase().padStart(2, '0');
+            }
+        }
+        
+        // Añadir mensaje al log
+        function addLogMessage(message) {
+            operationLog.innerHTML += `> ${message}<br>`;
+            operationLog.scrollTop = operationLog.scrollHeight;
+        }
+        
+        // Leer de la EEPROM
+        readBtn.addEventListener('click', function() {
+            const address = parseInt(addressInput.value);
+            if (address < 0 || address > 1023) {
+                addLogMessage(`Error: Dirección ${address} fuera de rango`);
+                return;
+            }
+            
+            const value = eepromMemory[address];
+            dataInput.value = value;
+            addLogMessage(`Lectura en 0x${address.toString(16).toUpperCase().padStart(3, '0')}: 0x${value.toString(16).toUpperCase().padStart(2, '0')}`);
+            
+            // Resaltar la celda leída
+            if (address < 16) {
+                highlightCell(address);
+            }
+        });
+        
+        // Escribir en la EEPROM
+        writeBtn.addEventListener('click', function() {
+            const address = parseInt(addressInput.value);
+            const data = parseInt(dataInput.value);
+            
+            if (address < 0 || address > 1023) {
+                addLogMessage(`Error: Dirección ${address} fuera de rango`);
+                return;
+            }
+            
+            if (data < 0 || data > 255) {
+                addLogMessage(`Error: Dato ${data} fuera de rango (0-255)`);
+                return;
+            }
+            
+            eepromMemory[address] = data;
+            updateMemoryDisplay();
+            addLogMessage(`Escritura en 0x${address.toString(16).toUpperCase().padStart(3, '0')}: 0x${data.toString(16).toUpperCase().padStart(2, '0')}`);
+            
+            // Resaltar la celda escrita
+            if (address < 16) {
+                highlightCell(address);
+            }
+        });
+        
+        // Limpiar la EEPROM
+        clearBtn.addEventListener('click', function() {
+            for (let i = 0; i < 1024; i++) {
+                eepromMemory[i] = 0;
+            }
+            updateMemoryDisplay();
+            addLogMessage("EEPROM limpiada (todos los bytes establecidos a 0x00)");
+        });
+        
+        // Resaltar una celda de memoria
+        function highlightCell(address) {
+            // Quitar resaltado anterior
+            const cells = document.querySelectorAll('.memory-cell');
+            cells.forEach(cell => cell.style.backgroundColor = '#e9ecef');
+            
+            // Resaltar nueva celda
+            if (address < 16) {
+                const cell = document.querySelectorAll('.memory-cell')[address];
+                cell.style.backgroundColor = '#ffeb3b';
+                
+                // Quitar resaltado después de 1 segundo
+                setTimeout(() => {
+                    cell.style.backgroundColor = '#e9ecef';
+                }, 1000);
+            }
+        }
+        
+        // Inicializar la visualización
+        generateMemoryGrid();
+        
+        // Añadir algunos datos de ejemplo
+        eepromMemory[0] = 0xAA;
+        eepromMemory[1] = 0x55;
+        eepromMemory[2] = 0x10;
+        eepromMemory[3] = 0x20;
+        eepromMemory[10] = 0xFF;
+        updateMemoryDisplay();
+    </script>
+</body>
+</html>

@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interrupciones en ATmega328P - Guía Completa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 25px;
+            min-height: 350px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 18px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .register {
+            color: #66d9ef;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .interrupt-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .interrupt-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .interrupt-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .interrupt-flow, .interrupt-config {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 350px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .flow-diagram {
+            height: 300px;
+            background: #2c3e50;
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            color: white;
+            padding: 15px;
+        }
+        
+        .flow-step {
+            width: 90%;
+            padding: 10px;
+            background: #3498db;
+            border-radius: 5px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .flow-arrow {
+            font-size: 1.5em;
+            color: #ffeb3b;
+        }
+        
+        .register-config {
+            text-align: left;
+            margin-top: 15px;
+        }
+        
+        .register-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .bit-config {
+            display: flex;
+            margin: 10px 0;
+        }
+        
+        .bit {
+            width: 30px;
+            height: 30px;
+            background: #e9ecef;
+            margin: 0 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+        
+        .bit.on {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .bit.off {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .bit-name {
+            font-size: 0.7em;
+            text-align: center;
+            margin-top: 3px;
+        }
+        
+        .interrupt-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .operation-log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .interrupt-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .interrupt-flow, .interrupt-config {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Interrupciones en ATmega328P - Guía Completa</h1>
+            <p class="subtitle">Aprende a utilizar las interrupciones del ATmega328P en ensamblador para crear sistemas reactivos y eficientes</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Introducción a las Interrupciones</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>¿Qué es una Interrupción?</h3>
+                    <ul>
+                        <li>Mecanismo que permite responder a eventos externos/internos</li>
+                        <li>Suspende temporalmente la ejecución del programa principal</li>
+                        <li>Ejecuta una rutina específica (ISR)</li>
+                        <li>Vuelve al punto donde se interrumpió</li>
+                    </ul>
+                    
+                    <h3>Ventajas de las Interrupciones</h3>
+                    <ul>
+                        <li>Respuesta inmediata a eventos</li>
+                        <li>Elimina la necesidad de polling</li>
+                        <li>Mayor eficiencia energética</li>
+                        <li>Programación más modular y reactiva</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Las interrupciones permiten que el CPU realice otras tareas mientras espera eventos
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Tipos de Interrupciones</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Por su Origen</h3>
+                    <ul>
+                        <li>Externas: INT0, INT1 (pines PD2, PD3)</li>
+                        <li>De periféricos: Timers, USART, ADC, etc.</li>
+                        <li>Por software</li>
+                    </ul>
+                    
+                    <h3>Por su Comportamiento</h3>
+                    <ul>
+                        <li>Activadas por flanco (rising, falling)</li>
+                        <li>Activadas por nivel (low level)</li>
+                        <li>Activadas por cambio (any change)</li>
+                    </ul>
+                    
+                    <h3>Vector de Interrupciones</h3>
+                    <ul>
+                        <li>Cada interrupción tiene una dirección específica</li>
+                        <li>RESET: 0x0000</li>
+                        <li>INT0: 0x0002</li>
+                        <li>TIMER0_OVF: 0x0020</li>
+                        <li>Etc.</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    El ATmega328P tiene 26 vectores de interrupción diferentes
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Registros de Control</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Registros Principales</h3>
+                    <ul>
+                        <li>SREG: Registro de Estado (bit I habilita interrupciones globalmente)</li>
+                        <li>EIMSK: Habilitación de interrupciones externas</li>
+                        <li>EICRA: Control de interrupciones externas</li>
+                        <li>TIMSK0/1/2: Habilitación de interrupciones de timers</li>
+                        <li>PCICR: Habilitación de interrupciones por cambio de pin</li>
+                    </ul>
+                    
+                    <h3>Configuración Básica</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Habilitar interrupciones globales</span><br>
+                        <span class="keyword">sei</span>  <span class="comment">; Set Global Interrupt Flag</span><br><br>
+                        
+                        <span class="comment">; Deshabilitar interrupciones globales</span><br>
+                        <span class="keyword">cli</span>  <span class="comment">; Clear Global Interrupt Flag</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El bit I en SREG controla las interrupciones globalmente
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Interrupciones Externas</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Configuración INT0 e INT1</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar INT0 por flanco de bajada</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;ISC01)  <span class="comment">; Flanco de bajada</span><br>
+                        <span class="keyword">sts</span> <span class="register">EICRA</span>, <span class="register">r16</span><br><br>
+                        
+                        <span class="comment">; Habilitar INT0</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;INT0)<br>
+                        <span class="keyword">out</span> <span class="register">EIMSK</span>, <span class="register">r16</span><br><br>
+                        
+                        <span class="comment">; Habilitar interrupciones globales</span><br>
+                        <span class="keyword">sei</span>
+                    </div>
+                    
+                    <h3>Opciones de Activación</h3>
+                    <ul>
+                        <li>Nivel bajo: ISC01=0, ISC00=0</li>
+                        <li>Cambio: ISC01=0, ISC00=1</li>
+                        <li>Flanco de bajada: ISC01=1, ISC00=0</li>
+                        <li>Flanco de subida: ISC01=1, ISC00=1</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    INT0 está en PD2, INT1 en PD3
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Interrupciones de Timer</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Timer0 - Modo CTC</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar Timer0 para interrupción cada 1ms</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;WGM01)  <span class="comment">; Modo CTC</span><br>
+                        <span class="keyword">out</span> <span class="register">TCCR0A</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, 249         <span class="comment">; Valor para OCR0A</span><br>
+                        <span class="keyword">out</span> <span class="register">OCR0A</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;OCIE0A) <span class="comment">; Habilitar interrupción</span><br>
+                        <span class="keyword">sts</span> <span class="register">TIMSK0</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;CS02)  <span class="comment">; Preescaler 256</span><br>
+                        <span class="keyword">out</span> <span class="register">TCCR0B</span>, <span class="register">r16</span><br>
+                        <span class="keyword">sei</span>                <span class="comment">; Habilitar interrupciones</span>
+                    </div>
+                    
+                    <h3>Tipos de Interrupciones de Timer</h3>
+                    <ul>
+                        <li>Overflow (TOV0): Cuando el contador se desborda</li>
+                        <li>Compare Match (OCF0A/OCF0B): Cuando coincide con OCR0A/OCR0B</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Frecuencia = 16MHz / (prescaler * (OCR0A + 1))
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Rutinas de Servicio (ISR)</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Estructura de una ISR</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Rutina de servicio de interrupción</span><br>
+                        <span class="label">ISR_TIMER0_OVF_vect:</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span>        <span class="comment">; Guardar registros usados</span><br>
+                        <span class="keyword">in</span> <span class="register">r16</span>, <span class="register">SREG</span>  <span class="comment">; Guardar registro de estado</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span><br><br>
+                        
+                        <span class="comment">; Código de la interrupción</span><br>
+                        <span class="keyword">inc</span> <span class="register">r17</span>        <span class="comment">; Ejemplo: incrementar contador</span><br><br>
+                        
+                        <span class="keyword">pop</span> <span class="register">r16</span>         <span class="comment">; Recuperar registro de estado</span><br>
+                        <span class="keyword">out</span> <span class="register">SREG</span>, <span class="register">r16</span><br>
+                        <span class="keyword">pop</span> <span class="register">r16</span>         <span class="comment">; Recuperar registros</span><br>
+                        <span class="keyword">reti</span>           <span class="comment">; Retorno de interrupción</span>
+                    </div>
+                    
+                    <h3>Consideraciones de las ISR</h3>
+                    <ul>
+                        <li>Deben ser lo más cortas posible</li>
+                        <li>Preservar todos los registros que modifican</li>
+                        <li>Preservar el registro SREG</li>
+                        <li>Usar reti en lugar de ret</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Las ISR no reciben parámetros ni devuelven valores
+                </div>
+            </div>
+            
+            <!-- Presentación 7 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Interrupciones por Cambio de Pin</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Pin Change Interrupts</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Habilitar interrupción por cambio en PCINT0 (PB0)</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;PCIE0)  <span class="comment">; Habilitar PCI en Puerto B</span><br>
+                        <span class="keyword">sts</span> <span class="register">PCICR</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;PCINT0) <span class="comment">; Habilitar PB0 para PCI</span><br>
+                        <span class="keyword">sts</span> <span class="register">PCMSK0</span>, <span class="register">r16</span><br>
+                        <span class="keyword">sei</span>                <span class="comment">; Habilitar interrupciones</span>
+                    </div>
+                    
+                    <h3>Vectores de PCI</h3>
+                    <ul>
+                        <li>PCINT0_vect: Puerto B (pines PB0-PB7)</li>
+                        <li>PCINT1_vect: Puerto C (pines PC0-PC6)</li>
+                        <li>PCINT2_vect: Puerto D (pines PD0-PD7)</li>
+                    </ul>
+                    
+                    <h3>Consideraciones</h3>
+                    <ul>
+                        <li>Se activan por cualquier cambio (flanco)</li>
+                        <li>Requieren verificar manualmente qué pin cambió</li>
+                        <li>Útiles cuando se necesitan múltiples pines con interrupciones</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Las PCI son útiles cuando se necesitan más de 2 interrupciones externas
+                </div>
+            </div>
+            
+            <!-- Presentación 8 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Prioridades y Anidamiento</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Prioridad de Interrupciones</h3>
+                    <ul>
+                        <li>Las interrupciones tienen prioridad según su vector</li>
+                        <li>Vector más bajo = Mayor prioridad</li>
+                        <li>RESET (0x0000) tiene la mayor prioridad</li>
+                        <li>INT0 (0x0002) tiene prioridad sobre INT1 (0x0004)</li>
+                    </ul>
+                    
+                    <h3>Anidamiento de Interrupciones</h3>
+                    <ul>
+                        <li>Por defecto, las interrupciones se deshabilitan durante una ISR</li>
+                        <li>Se pueden re-habilitar dentro de una ISR para anidamiento</li>
+                        <li>El anidamiento debe manejarse con cuidado</li>
+                        <li>Puede causar desbordamiento de pila si no se controla</li>
+                    </ul>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Permitir anidamiento en una ISR</span><br>
+                        <span class="label">ISR_TIMER0_OVF_vect:</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span><br>
+                        <span class="keyword">in</span> <span class="register">r16</span>, <span class="register">SREG</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span><br>
+                        <span class="keyword">sei</span>  <span class="comment">; Re-habilitar interrupciones</span><br>
+                        <span class="comment">; ... código ...</span><br>
+                        <span class="keyword">cli</span>  <span class="comment">; Deshabilitar para restaurar contexto</span><br>
+                        <span class="keyword">pop</span> <span class="register">r16</span><br>
+                        <span class="keyword">out</span> <span class="register">SREG</span>, <span class="register">r16</span><br>
+                        <span class="keyword">pop</span> <span class="register">r16</span><br>
+                        <span class="keyword">reti</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El anidamiento de interrupciones puede complicar la depuración
+                </div>
+            </div>
+            
+            <!-- Presentación 9 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Ejemplos Prácticos</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Parpadeo LED con Interrupciones</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Parpadear LED cada 500ms usando Timer1</span><br>
+                        <span class="label">init_timer1:</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="define">HIGH</span>(31249)  <span class="comment">; 500ms con prescaler 256</span><br>
+                        <span class="keyword">sts</span> <span class="register">OCR1AH</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="define">LOW</span>(31249)<br>
+                        <span class="keyword">sts</span> <span class="register">OCR1AL</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;WGM12)  <span class="comment">; Modo CTC</span><br>
+                        <span class="keyword">sts</span> <span class="register">TCCR1B</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;OCIE1A) <span class="comment">; Habilitar interrupción</span><br>
+                        <span class="keyword">sts</span> <span class="register">TIMSK1</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;CS12)  <span class="comment">; Prescaler 256</span><br>
+                        <span class="keyword">sts</span> <span class="register">TCCR1B</span>, <span class="register">r16</span><br>
+                        <span class="keyword">sbi</span> <span class="register">DDRB</span>, 5      <span class="comment">; PB5 como salida (LED)</span><br>
+                        <span class="keyword">sei</span>                <span class="comment">; Habilitar interrupciones</span><br><br>
+                        
+                        <span class="label">ISR_TIMER1_COMPA_vect:</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span><br>
+                        <span class="keyword">in</span> <span class="register">r16</span>, <span class="register">SREG</span><br>
+                        <span class="keyword">push</span> <span class="register">r16</span><br>
+                        <span class="keyword">sbis</span> <span class="register">PINB</span>, 5     <span class="comment">; Saltar si PB5 está encendido</span><br>
+                        <span class="keyword">rjmp</span> <span class="label">encender</span><br>
+                        <span class="keyword">cbi</span> <span class="register">PORTB</span>, 5    <span class="comment">; Apagar LED</span><br>
+                        <span class="keyword">rjmp</span> <span class="label">fin_isr</span><br>
+                        <span class="label">encender:</span><br>
+                        <span class="keyword">sbi</span> <span class="register">PORTB</span>, 5    <span class="comment">; Encender LED</span><br>
+                        <span class="label">fin_isr:</span><br>
+                        <span class="keyword">pop</span> <span class="register">r16</span><br>
+                        <span class="keyword">out</span> <span class="register">SREG</span>, <span class="register">r16</span><br>
+                        <span class="keyword">pop</span> <span class="register">r16</span><br>
+                        <span class="keyword">reti</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Las interrupciones permiten crear código no bloqueante
+                </div>
+            </div>
+        </div>
+        
+        <div class="interrupt-demo">
+            <h2>Simulador de Configuración de Interrupciones</h2>
+            <p>Explora cómo configurar diferentes tipos de interrupciones:</p>
+            
+            <div class="interrupt-visualization">
+                <div class="interrupt-flow">
+                    <h3>Flujo de una Interrupción</h3>
+                    <div class="flow-diagram">
+                        <div class="flow-step">Ejecución Programa Principal</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-step">Ocurre Interrupción</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-step">Guardar Contexto (PC, SREG)</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-step">Ejecutar ISR</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-step">Restaurar Contexto</div>
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-step">Continuar Programa Principal</div>
+                    </div>
+                </div>
+                
+                <div class="interrupt-config">
+                    <h3>Configuración de Registros</h3>
+                    
+                    <div class="register-config">
+                        <h4>SREG - Registro de Estado</h4>
+                        <div class="bit-config">
+                            <div class="bit on">I</div>
+                            <div class="bit off">T</div>
+                            <div class="bit off">H</div>
+                            <div class="bit off">S</div>
+                            <div class="bit off">V</div>
+                            <div class="bit off">N</div>
+                            <div class="bit off">Z</div>
+                            <div class="bit off">C</div>
+                        </div>
+                        <div class="bit-name">Global Int</div>
+                        
+                        <h4>EIMSK - Interrupciones Externas</h4>
+                        <div class="bit-config">
+                            <div class="bit on">INT0</div>
+                            <div class="bit off">INT1</div>
+                            <div class="bit off">-</div>
+                            <div class="bit off">-</div>
+                            <div class="bit off">-</div>
+                            <div class="bit off">-</div>
+                            <div class="bit off">-</div>
+                            <div class="bit off">-</div>
+                        </div>
+                        
+                        <h4>EICRA - Control INT0/INT1</h4>
+                        <div class="bit-config">
+                            <div class="bit off">ISC00</div>
+                            <div class="bit on">ISC01</div>
+                            <div class="bit off">ISC10</div>
+                            <div class="bit off">ISC11</div>
+                            <div class="bit off">-</div>
+                            <div class="bit off">-</div>
+                            <div class="bit off">-</div>
+                            <div class="bit off">-</div>
+                        </div>
+                        <div class="bit-name">flanco bajada</div>
+                    </div>
+                    
+                    <div class="interrupt-buttons">
+                        <button class="btn" id="enable-int-btn">
+                            <i class="fas fa-toggle-on"></i> Habilitar INT0
+                        </button>
+                        <button class="btn" id="trigger-int-btn">
+                            <i class="fas fa-bolt"></i> Disparar INT0
+                        </button>
+                    </div>
+                    
+                    <div class="operation-log" id="operation-log">
+                        > Sistema inicializado<br>
+                        > INT0 configurado por flanco de bajada
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de Interrupciones
+        document.addEventListener('DOMContentLoaded', function() {
+            const enableIntBtn = document.getElementById('enable-int-btn');
+            const triggerIntBtn = document.getElementById('trigger-int-btn');
+            const operationLog = document.getElementById('operation-log');
+            const int0Bit = document.querySelector('.bit-config:nth-child(2) .bit');
+            const globalIntBit = document.querySelector('.bit-config:nth-child(1) .bit');
+            
+            let interruptsEnabled = true;
+            
+            // Añadir mensaje al log
+            function addLogMessage(message) {
+                operationLog.innerHTML += '> ' + message + '<br>';
+                operationLog.scrollTop = operationLog.scrollHeight;
+            }
+            
+            // Habilitar/Deshabilitar interrupciones
+            enableIntBtn.addEventListener('click', function() {
+                interruptsEnabled = !interruptsEnabled;
+                
+                if (interruptsEnabled) {
+                    globalIntBit.classList.remove('off');
+                    globalIntBit.classList.add('on');
+                    enableIntBtn.innerHTML = '<i class="fas fa-toggle-on"></i> Deshabilitar INT0';
+                    addLogMessage('Interrupciones habilitadas globalmente');
+                } else {
+                    globalIntBit.classList.remove('on');
+                    globalIntBit.classList.add('off');
+                    enableIntBtn.innerHTML = '<i class="fas fa-toggle-off"></i> Habilitar INT0';
+                    addLogMessage('Interrupciones deshabilitadas globalmente');
+                }
+            });
+            
+            // Disparar interrupción
+            triggerIntBtn.addEventListener('click', function() {
+                if (!interruptsEnabled) {
+                    addLogMessage('Intento de interrupción ignorado (interrupciones deshabilitadas)');
+                    return;
+                }
+                
+                addLogMessage('INTERRUPCIÓN: INT0 disparada por flanco de bajada');
+                addLogMessage('ISR: Ejecutando rutina de servicio de INT0');
+                
+                // Simular ejecución de ISR
+                setTimeout(() => {
+                    addLogMessage('ISR: Rutina completada, retornando al programa principal');
+                }, 1000);
+            });
+            
+            // Inicializar mensajes
+            addLogMessage('Sistema listo - Las interrupciones están habilitadas');
+        });
+    </script>
+</body>
+</html>

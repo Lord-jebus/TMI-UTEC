@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memorias en ATmega328P y Data Logger</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c2461, #1e3799, #4a69bd);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.4em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 20px;
+            min-height: 320px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            font-size: 1.2em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 10px;
+            padding-left: 22px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.3em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.9em;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .memory-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .memory-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .memory-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .memory-diagram, .memory-operation {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 350px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .memory-graphic {
+            width: 280px;
+            height: 300px;
+            background: #2c3e50;
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .memory-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            border-bottom: 1px solid #3c5068;
+            position: relative;
+        }
+        
+        .memory-type {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .memory-size {
+            font-size: 0.9em;
+            color: #ccc;
+        }
+        
+        .memory-usage {
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+            font-size: 0.8em;
+            color: #ffeb3b;
+        }
+        
+        .flash { background: #3498db; }
+        .sram { background: #2ecc71; }
+        .eeprom { background: #e74c3c; }
+        .registers { background: #f39c12; }
+        
+        .operation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .operation-log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: #3498db;
+            border-radius: 5px;
+            transition: width 0.5s;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .memory-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .memory-diagram, .memory-operation {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Memorias en ATmega328P y Data Logger</h1>
+            <p class="subtitle">Aprende sobre los diferentes tipos de memoria en el ATmega328P y cómo implementar un data logger</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Presentación 1 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Arquitectura de Memoria Harvard</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características Principales</h3>
+                    <ul>
+                        <li>Memorias separadas para programa y datos</li>
+                        <li>Mayor velocidad de ejecución</li>
+                        <li>Acceso simultáneo a instrucciones y datos</li>
+                        <li>Optimizado para microcontroladores embebidos</li>
+                    </ul>
+                    
+                    <h3>Ventajas</h3>
+                    <ul>
+                        <li>Mayor throughput (rendimiento)</li>
+                        <li>Mejor seguridad (separación código/datos)</li>
+                        <li>Optimización para aplicaciones en tiempo real</li>
+                        <li>Arquitectura predecible</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La arquitectura Harvard es ideal para aplicaciones embebidas
+                </div>
+            </div>
+            
+            <!-- Presentación 2 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Memoria Flash (Programa)</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características</h3>
+                    <ul>
+                        <li>Memoria no volátil para almacenar programa</li>
+                        <li>32KB en ATmega328P (0x0000 - 0x3FFF)</li>
+                        <li>10,000 ciclos de escritura típicos</li>
+                        <li>Organizada en páginas (64 bytes por página)</li>
+                        <li>Soporta auto-programación (bootloader)</li>
+                    </ul>
+                    
+                    <h3>Acceso en Ensamblador</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; El programa se ejecuta directamente desde Flash</span><br>
+                        <span class="comment">; Las direcciones se referencian con etiquetas</span><br>
+                        <span class="label">inicio:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">ldi</span> <span class="register">r16</span>, 0xFF<br>
+                        &nbsp;&nbsp;<span class="keyword">out</span> <span class="register">DDRB</span>, <span class="register">r16</span><br>
+                        <span class="label">bucle:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rjmp</span> <span class="label">bucle</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La memoria Flash conserva los datos incluso sin alimentación
+                </div>
+            </div>
+            
+            <!-- Presentación 3 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>SRAM (Memoria de Datos)</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características</h3>
+                    <ul>
+                        <li>Memoria volátil de acceso aleatorio</li>
+                        <li>2KB en ATmega328P (0x0100 - 0x08FF)</li>
+                        <li>Acceso rápido (1 ciclo de reloj)</li>
+                        <li>Organizada en: Registros, I/O, SRAM interna</li>
+                        <li>Se pierde al desconectar la alimentación</li>
+                    </ul>
+                    
+                    <h3>Organización de la SRAM</h3>
+                    <ul>
+                        <li>0x0000-0x001F: 32 Registros de propósito general</li>
+                        <li>0x0020-0x005F: 64 Registros de I/O</li>
+                        <li>0x0060-0x00FF: 160 Registros extendidos de I/O</li>
+                        <li>0x0100-0x08FF: 2048 bytes de SRAM interna</li>
+                    </ul>
+                    
+                    <h3>Acceso en Ensamblador</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Acceder a SRAM con direccionamiento directo</span><br>
+                        <span class="keyword">sts</span> 0x0100, <span class="register">r16</span>  <span class="comment">; Almacenar en SRAM</span><br>
+                        <span class="keyword">lds</span> <span class="register">r17</span>, 0x0100  <span class="comment">; Leer desde SRAM</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La SRAM es volátil y se usa para variables y pila
+                </div>
+            </div>
+            
+            <!-- Presentación 4 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>EEPROM (Memoria No Volátil)</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características</h3>
+                    <ul>
+                        <li>Memoria no volátil para datos</li>
+                        <li>1KB en ATmega328P (0x0000 - 0x03FF)</li>
+                        <li>100,000 ciclos de escritura típicos</li>
+                        <li>Acceso más lento que SRAM</li>
+                        <li>Ideal para configuraciones y datos críticos</li>
+                    </ul>
+                    
+                    <h3>Registros de Control</h3>
+                    <ul>
+                        <li>EEARH/EEARL: Dirección EEPROM</li>
+                        <li>EEDR: Dato EEPROM</li>
+                        <li>EECR: Control EEPROM</li>
+                    </ul>
+                    
+                    <h3>Acceso en Ensamblador</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Escribir en EEPROM</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, 0x00<br>
+                        <span class="keyword">out</span> <span class="register">EEARH</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, 0x10<br>
+                        <span class="keyword">out</span> <span class="register">EEARL</span>, <span class="register">r16</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, 0x55<br>
+                        <span class="keyword">out</span> <span class="register">EEDR</span>, <span class="register">r16</span><br>
+                        <span class="keyword">sbi</span> <span class="register">EECR</span>, <span class="register">EEMPE</span><br>
+                        <span class="keyword">sbi</span> <span class="register">EECR</span>, <span class="register">EEPE</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La EEPROM conserva datos sin alimentación pero es más lenta
+                </div>
+            </div>
+            
+            <!-- Presentación 5 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Registros de Propósito General</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características</h3>
+                    <ul>
+                        <li>32 registros de 8 bits (R0-R31)</li>
+                        <li>Acceso más rápido que la SRAM</li>
+                        <li>Algunos con funciones especiales</li>
+                        <li>Ubicados en los primeros 32 bytes de espacio de direcciones</li>
+                    </ul>
+                    
+                    <h3>Registros Especiales</h3>
+                    <ul>
+                        <li>R0: Usado por operaciones de multiplicación</li>
+                        <li>R26-R31: Registros índice (X, Y, Z)</li>
+                        <li>R28-R29: Puntero de pila (Y)</li>
+                        <li>R30-R31: Puntero de programa (Z)</li>
+                    </ul>
+                    
+                    <h3>Uso en Ensamblador</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Usar registros para operaciones rápidas</span><br>
+                        <span class="keyword">mov</span> <span class="register">r16</span>, <span class="register">r17</span>  <span class="comment">; Copiar entre registros</span><br>
+                        <span class="keyword">add</span> <span class="register">r18</span>, <span class="register">r19</span>  <span class="comment">; Sumar registros</span><br>
+                        <span class="keyword">inc</span> <span class="register">r20</span>       <span class="comment">; Incrementar registro</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Los registros son la memoria más rápida en el microcontrolador
+                </div>
+            </div>
+            
+            <!-- Presentación 6 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Registros de I/O</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Características</h3>
+                    <ul>
+                        <li>Controlan los periféricos del microcontrolador</li>
+                        <li>Mapeados en espacio de memoria (0x0020-0x005F)</li>
+                        <li>Acceso con instrucciones IN/OUT</li>
+                        <li>Algunos son de solo lectura o solo escritura</li>
+                    </ul>
+                    
+                    <h3>Registros Importantes</h3>
+                    <ul>
+                        <li>DDRx: Data Direction Register (control de dirección)</li>
+                        <li>PORTx: Data Register (escritura)</li>
+                        <li>PINx: Input Pins Address (lectura)</li>
+                        <li>SPCR/SPDR: Control SPI</li>
+                        <li>UDR0: UART Data Register</li>
+                    </ul>
+                    
+                    <h3>Ejemplo de Uso</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Configurar Puerto B como salida</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, 0xFF<br>
+                        <span class="keyword">out</span> <span class="register">DDRB</span>, <span class="register">r16</span><br><br>
+                        
+                        <span class="comment">; Encender todos los LEDs</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, 0xFF<br>
+                        <span class="keyword">out</span> <span class="register">PORTB</span>, <span class="register">r16</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Los registros de I/O controlan la interfaz con el mundo exterior
+                </div>
+            </div>
+            
+            <!-- Presentación 7 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>¿Qué es un Data Logger?</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Definición</h3>
+                    <ul>
+                        <li>Sistema que registra datos en el tiempo</li>
+                        <li>Captura información de sensores o eventos</li>
+                        <li>Almacena datos para posterior análisis</li>
+                        <li>Puede operar de forma autónoma</li>
+                    </ul>
+                    
+                    <h3>Aplicaciones</h3>
+                    <ul>
+                        <li>Monitoreo ambiental (temperatura, humedad)</li>
+                        <li>Registro de consumo energético</li>
+                        <li>Análisis de vibraciones en máquinas</li>
+                        <li>Estudios científicos y de investigación</li>
+                        <li>Sistemas de seguridad</li>
+                    </ul>
+                    
+                    <h3>Componentes Típicos</h3>
+                    <ul>
+                        <li>Microcontrolador (como ATmega328P)</li>
+                        <li>Sensores (temperatura, humedad, etc.)</li>
+                        <li>Memoria no volátil (EEPROM, SD card)</li>
+                        <li>RTC (Real Time Clock) para timestamp</li>
+                        <li>Interfaz de comunicación</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Los data loggers son esenciales para el Internet de las Cosas (IoT)
+                </div>
+            </div>
+            
+            <!-- Presentación 8 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Implementando un Data Logger</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Estrategias de Almacenamiento</h3>
+                    <ul>
+                        <li>EEPROM interna (capacidad limitada)</li>
+                        <li>Memoria externa (SD card, Flash SPI)</li>
+                        <li>Transmisión a sistema externo</li>
+                        <li>Almacenamiento en buffer circular</li>
+                    </ul>
+                    
+                    <h3>Consideraciones de Diseño</h3>
+                    <ul>
+                        <li>Consumo energético (especialmente en batería)</li>
+                        <li>Velocidad de muestreo vs capacidad de almacenamiento</li>
+                        <li>Integridad de datos (checksums, paridad)</li>
+                        <li>Timestamp preciso (usando RTC)</li>
+                    </ul>
+                    
+                    <h3>Ejemplo de Estructura de Datos</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Estructura para registro de datos</span><br>
+                        <span class="comment">; Timestamp (4 bytes) + Temperatura (2 bytes) + Humedad (2 bytes)</span><br>
+                        <span class="label">registro_datos:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">.byte</span> 4  <span class="comment">; Timestamp (32 bits)</span><br>
+                        &nbsp;&nbsp;<span class="keyword">.byte</span> 2  <span class="comment">; Temperatura (16 bits)</span><br>
+                        &nbsp;&nbsp;<span class="keyword">.byte</span> 2  <span class="comment">; Humedad (16 bits)</span><br>
+                        &nbsp;&nbsp;<span class="keyword">.byte</span> 1  <span class="comment">; Checksum (8 bits)</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Un buen diseño de data logger considera equilibrio entre precisión y capacidad
+                </div>
+            </div>
+            
+            <!-- Presentación 9 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Data Logger con ATmega328P</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Componentes Necesarios</h3>
+                    <ul>
+                        <li>ATmega328P con cristal 16MHz</li>
+                        <li>Sensor DHT11 (temperatura y humedad)</li>
+                        <li>RTC DS3231 (reloj en tiempo real)</li>
+                        <li>Memoria SD card (para almacenamiento)</li>
+                        <li>Fuente de alimentación (batería LiPo)</li>
+                    </ul>
+                    
+                    <h3>Flujo del Programa</h3>
+                    <ul>
+                        <li>Inicializar periféricos (I2C, SPI, USART)</li>
+                        <li>Configurar RTC y obtener timestamp</li>
+                        <li>Leer sensores periódicamente</li>
+                        <li>Almacenar datos en SD card</li>
+                        <li>Manejar energía (modos sleep)</li>
+                    </ul>
+                    
+                    <h3>Ejemplo de Código</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Bucle principal del data logger</span><br>
+                        <span class="label">main_loop:</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">leer_temperatura</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">leer_humedad</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">obtener_timestamp</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">guardar_datos_sd</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rcall</span> <span class="label">delay_1minuto</span><br>
+                        &nbsp;&nbsp;<span class="keyword">rjmp</span> <span class="label">main_loop</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El ATmega328P es ideal para data loggers por su bajo consumo y periféricos
+                </div>
+            </div>
+            
+            <!-- Presentación 10 -->
+            <div class="presentation">
+                <div class="presentation-header">
+                    <h2>Optimización de Energía</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3>Modos de Sueño</h3>
+                    <ul>
+                        <li>Idle: CPU detenida, periféricos activos</li>
+                        <li>ADC Noise Reduction: Mejora precisión ADC</li>
+                        <li>Power-down: Mínimo consumo, solo algunas interrupciones</li>
+                        <li>Power-save: Similar a Power-down con timer activo</li>
+                        <li>Standby: Cristal running, rápido despertar</li>
+                    </ul>
+                    
+                    <h3>Técnicas de Ahorro</h3>
+                    <ul>
+                        <li>Desactivar periféricos no usados</li>
+                        <li>Reducir frecuencia de reloj cuando es posible</li>
+                        <li>Usar interrupciones en lugar de polling</li>
+                        <li>Mínimo tiempo activo, máximo en sleep</li>
+                    </ul>
+                    
+                    <h3>Ejemplo de Modo Sleep</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">; Entrar en modo power-down</span><br>
+                        <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;SE)|(1&lt;&lt;SM1)  <span class="comment">; Power-down mode</span><br>
+                        <span class="keyword">out</span> <span class="register">SMCR</span>, <span class="register">r16</span><br>
+                        <span class="keyword">sleep</span>        <span class="comment">; Instrucción de sleep</span><br>
+                        <span class="comment">; El micro despertará por interrupción</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    La optimización de energía es crucial para data loggers portátiles
+                </div>
+            </div>
+        </div>
+        
+        <div class="memory-demo">
+            <h2>Simulador de Memorias ATmega328P</h2>
+            <p>Explora cómo se utilizan las diferentes memorias en un data logger:</p>
+            
+            <div class="memory-visualization">
+                <div class="memory-diagram">
+                    <h3>Distribución de Memoria</h3>
+                    <div class="memory-graphic">
+                        <div class="memory-section flash">
+                            <div class="memory-type">Flash</div>
+                            <div class="memory-size">32KB (Programa)</div>
+                            <div class="memory-usage" id="flash-usage">45%</div>
+                        </div>
+                        
+                        <div class="memory-section sram">
+                            <div class="memory-type">SRAM</div>
+                            <div class="memory-size">2KB (Datos)</div>
+                            <div class="memory-usage" id="sram-usage">30%</div>
+                        </div>
+                        
+                        <div class="memory-section eeprom">
+                            <div class="memory-type">EEPROM</div>
+                            <div class="memory-size">1KB (Configuración)</div>
+                            <div class="memory-usage" id="eeprom-usage">20%</div>
+                        </div>
+                        
+                        <div class="memory-section registers">
+                            <div class="memory-type">Registros</div>
+                            <div class="memory-size">32B (R0-R31)</div>
+                            <div class="memory-usage">100%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="memory-operation">
+                    <h3>Operaciones de Data Logger</h3>
+                    
+                    <div class="bus-config-item">
+                        <h4>Simular Lectura de Sensor</h4>
+                        <div class="progress-bar">
+                            <div class="progress" id="sensor-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="bus-config-item">
+                        <h4>Almacenar en EEPROM</h4>
+                        <div class="progress-bar">
+                            <div class="progress" id="eeprom-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="bus-config-item">
+                        <h4>Escribir en Tarjeta SD</h4>
+                        <div class="progress-bar">
+                            <div class="progress" id="sd-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="operation-buttons">
+                        <button class="btn" id="read-sensor-btn">
+                            <i class="fas fa-thermometer-half"></i> Leer Sensor
+                        </button>
+                        <button class="btn" id="save-data-btn">
+                            <i class="fas fa-save"></i> Guardar Datos
+                        </button>
+                    </div>
+                    
+                    <div class="operation-log" id="operation-log">
+                        > Data Logger inicializado<br>
+                        > Memoria EEPROM disponible: 1024 bytes<br>
+                        > Esperando datos de sensores...
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="#" class="btn">
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de Data Logger
+        document.addEventListener('DOMContentLoaded', function() {
+            const readSensorBtn = document.getElementById('read-sensor-btn');
+            const saveDataBtn = document.getElementById('save-data-btn');
+            const operationLog = document.getElementById('operation-log');
+            const flashUsage = document.getElementById('flash-usage');
+            const sramUsage = document.getElementById('sram-usage');
+            const eepromUsage = document.getElementById('eeprom-usage');
+            const sensorProgress = document.getElementById('sensor-progress');
+            const eepromProgress = document.getElementById('eeprom-progress');
+            const sdProgress = document.getElementById('sd-progress');
+            
+            let eepromUsed = 200; // bytes iniciales usados
+            let sramUsed = 600;   // bytes iniciales usados
+            
+            // Actualizar displays de uso
+            function updateUsageDisplays() {
+                flashUsage.textContent = '45%';
+                sramUsage.textContent = Math.round((sramUsed / 2048) * 100) + '%';
+                eepromUsage.textContent = Math.round((eepromUsed / 1024) * 100) + '%';
+            }
+            
+            // Leer sensor
+            readSensorBtn.addEventListener('click', function() {
+                operationLog.innerHTML += '> Leyendo sensor DHT11...<br>';
+                sensorProgress.style.width = '0%';
+                
+                // Animación de progreso
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5;
+                    sensorProgress.style.width = progress + '%';
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        const temp = (20 + Math.random() * 10).toFixed(1);
+                        const hum = (30 + Math.random() * 20).toFixed(1);
+                        operationLog.innerHTML += `> Temperatura: ${temp}°C, Humedad: ${hum}%<br>`;
+                        operationLog.scrollTop = operationLog.scrollHeight;
+                        
+                        // Aumentar uso de SRAM (almacenamiento temporal)
+                        sramUsed += 8;
+                        updateUsageDisplays();
+                    }
+                }, 50);
+            });
+            
+            // Guardar datos
+            saveDataBtn.addEventListener('click', function() {
+                if (eepromUsed >= 1000) {
+                    operationLog.innerHTML += '> ERROR: EEPROM llena, no se pueden guardar más datos<br>';
+                    operationLog.scrollTop = operationLog.scrollHeight;
+                    return;
+                }
+                
+                operationLog.innerHTML += '> Guardando datos en EEPROM...<br>';
+                eepromProgress.style.width = '0%';
+                
+                // Animación de progreso
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 10;
+                    eepromProgress.style.width = progress + '%';
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        operationLog.innerHTML += '> Datos guardados en EEPROM correctamente<br>';
+                        operationLog.scrollTop = operationLog.scrollHeight;
+                        
+                        // Aumentar uso de EEPROM
+                        eepromUsed += 8;
+                        updateUsageDisplays();
+                        
+                        // Simular escritura en SD card después
+                        setTimeout(() => {
+                            operationLog.innerHTML += '> Escribiendo en tarjeta SD...<br>';
+                            sdProgress.style.width = '0%';
+                            
+                            let sdProgressValue = 0;
+                            const sdInterval = setInterval(() => {
+                                sdProgressValue += 5;
+                                sdProgress.style.width = sdProgressValue + '%';
+                                
+                                if (sdProgressValue >= 100) {
+                                    clearInterval(sdInterval);
+                                    operationLog.innerHTML += '> Datos escritos en tarjeta SD correctamente<br>';
+                                    operationLog.scrollTop = operationLog.scrollHeight;
+                                    
+                                    // Liberar SRAM (los datos ya están guardados)
+                                    sramUsed -= 8;
+                                    updateUsageDisplays();
+                                }
+                            }, 50);
+                        }, 500);
+                    }
+                }, 50);
+            });
+            
+            // Inicializar displays
+            updateUsageDisplays();
+        });
+    </script>
+</body>
+</html>
