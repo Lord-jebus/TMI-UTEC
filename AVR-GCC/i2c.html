@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunicación I2C en ATmega328P</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --accent1: #e74c3c;
+            --accent2: #2ecc71;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.4em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 20px;
+            min-height: 320px;
+        }
+        
+        .presentation-content h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+            font-size: 1.2em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 10px;
+            padding-left: 22px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.3em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.9em;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .register {
+            color: #66d9ef;
+        }
+        
+        .directive {
+            color: #a6e22e;
+        }
+        
+        .number {
+            color: #ae81ff;
+        }
+        
+        .string {
+            color: #e6db74;
+        }
+        
+        .i2c-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .i2c-demo h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+        }
+        
+        .i2c-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .i2c-diagram, .i2c-config {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 350px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .i2c-graphic {
+            width: 280px;
+            height: 200px;
+            background: var(--secondary);
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        
+        .signal-wave {
+            width: 90%;
+            height: 60px;
+            background: #1e272e;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sda-wave, .scl-wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 8px,
+                var(--primary) 8px,
+                var(--primary) 10px
+            );
+            animation: waveMove 3s linear infinite;
+        }
+        
+        .scl-wave {
+            top: 50%;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 10px,
+                var(--accent2) 10px,
+                var(--accent2) 12px
+            );
+            animation: waveMove 2.5s linear infinite;
+        }
+        
+        @keyframes waveMove {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-10px); }
+        }
+        
+        .pin-connection {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        
+        .pin {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .connection-line {
+            flex-grow: 1;
+            height: 2px;
+            background: var(--primary);
+            margin: 0 10px;
+            align-self: center;
+        }
+        
+        .register-config {
+            text-align: left;
+            margin-top: 15px;
+        }
+        
+        .register-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .operation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .operation-log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2d3e50;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .language-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .lang-btn {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .lang-section {
+            display: none;
+        }
+        
+        .lang-section.active {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation-container {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .i2c-visualization {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .i2c-diagram, .i2c-config {
+                margin: 10px 0;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Comunicación I2C en ATmega328P</h1>
+            <p class="subtitle">Aprende a utilizar el bus I2C del ATmega328P programado en ensamblador y C</p>
+        </header>
+        
+        <div class="language-selector">
+            <button class="lang-btn active" onclick="showLanguage('assembler')">Ensamblador</button>
+            <button class="lang-btn" onclick="showLanguage('c')">Lenguaje C</button>
+        </div>
+        
+        <!-- SECCIÓN DE ENSAMBLADOR -->
+        <div class="lang-section active" id="assembler-section">
+            <div class="presentation-container">
+                <!-- Presentación 1 -->
+                <div class="presentation">
+                    <div class="presentation-header">
+                        <h2>Introducción a I2C</h2>
+                    </div>
+                    <div class="presentation-content">
+                        <h3>¿Qué es I2C?</h3>
+                        <ul>
+                            <li>Inter-Integrated Circuit (I²C)</li>
+                            <li>Protocolo de comunicación serial sincrónico</li>
+                            <li>Comunicación multi-maestro y multi-esclavo</li>
+                            <li>Usa solo dos cables: SDA (datos) y SCL (reloj)</li>
+                            <li>Velocidades estándar: 100kbps, 400kbps, 1Mbps, 3.4Mbps</li>
+                        </ul>
+                        
+                        <h3>Características en ATmega328P</h3>
+                        <ul>
+                            <li>Módulo TWI (Two-Wire Interface)</li>
+                            <li>Compatible con el protocolo I2C</li>
+                            <li>Soporta modo maestro y esclavo</li>
+                            <li>Generación de interrupciones</li>
+                            <li>Detección de colisiones en modo multi-maestro</li>
+                        </ul>
+                    </div>
+                    <div class="presentation-footer">
+                        I2C es ampliamente utilizado para comunicarse con sensores, memorias y otros periféricos
+                    </div>
+                </div>
+                
+                <!-- Presentación 2 -->
+                <div class="presentation">
+                    <div class="presentation-header">
+                        <h2>Registros TWI del ATmega328P</h2>
+                    </div>
+                    <div class="presentation-content">
+                        <h3>Registros Principales</h3>
+                        <ul>
+                            <li>TWBR (TWI Bit Rate Register): Velocidad de comunicación</li>
+                            <li>TWCR (TWI Control Register): Control del módulo</li>
+                            <li>TWSR (TWI Status Register): Estado de la comunicación</li>
+                            <li>TWDR (TWI Data Register): Datos a transmitir/recibir</li>
+                            <li>TWAR (TWI Address Register): Dirección en modo esclavo</li>
+                        </ul>
+                        
+                        <h3>Bits Importantes de TWCR</h3>
+                        <ul>
+                            <li>TWINT: Interrupción TWI</li>
+                            <li>TWEA: Habilitar acknowledge</li>
+                            <li>TWSTA: Condición START</li>
+                            <li>TWSTO: Condición STOP</li>
+                            <li>TWWC: Colisión de escritura</li>
+                            <li>TWEN: Habilitar TWI</li>
+                            <li>TWIE: Habilitar interrupción TWI</li>
+                        </ul>
+                    </div>
+                    <div class="presentation-footer">
+                        La correcta configuración de los registros es esencial para el funcionamiento del I2C
+                    </div>
+                </div>
+                
+                <!-- Presentación 3 -->
+                <div class="presentation">
+                    <div class="presentation-header">
+                        <h2>Configuración de Velocidad</h2>
+                    </div>
+                    <div class="presentation-content">
+                        <h3>Cálculo de Baud Rate</h3>
+                        <ul>
+                            <li>Fórmula: SCL Frequency = CPU Clock / (16 + 2 * TWBR * Prescaler)</li>
+                            <li>TWBR es un valor de 8 bits (0-255)</li>
+                            <li>Prescaler se configura con bits TWPS1 y TWPS0 en TWSR</li>
+                            <li>Valores de prescaler: 1, 4, 16, 64</li>
+                        </ul>
+                        
+                        <h3>Configuración en Ensamblador</h3>
+                        
+                        <div class="code-block">
+                            <span class="comment">; Configurar para 100kHz a 16MHz con prescaler 1</span><br>
+                            <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="number">0</span>  <span class="comment">; Prescaler = 1 (TWPS1:0 = 00)</span><br>
+                            <span class="keyword">sts</span> <span class="register">TWSR</span>, <span class="register">r16</span><br>
+                            <span class="comment">; TWBR = (F_CPU / SCL - 16) / (2 * Prescaler)</span><br>
+                            <span class="comment">; TWBR = (16000000/100000 - 16) / 2 = (160-16)/2 = 72</span><br>
+                            <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="number">72</span><br>
+                            <span class="keyword">sts</span> <span class="register">TWBR</span>, <span class="register">r16</span>
+                        </div>
+                        
+                        <h3>Velocidades Comunes</h3>
+                        <ul>
+                            <li>Standard Mode: 100 kbit/s</li>
+                            <li>Fast Mode: 400 kbit/s</li>
+                            <li>Fast Mode Plus: 1 Mbit/s</li>
+                            <li>High Speed Mode: 3.4 Mbit/s</li>
+                        </ul>
+                    </div>
+                    <div class="presentation-footer">
+                        La velocidad de comunicación debe ser compatible con los dispositivos esclavos
+                    </div>
+                </div>
+                
+                <!-- Presentación 4 -->
+                <div class="presentation">
+                    <div class="presentation-header">
+                        <h2>Inicialización del TWI</h2>
+                    </div>
+                    <div class="presentation-content">
+                        <h3>Secuencia de Inicialización</h3>
+                        <ol>
+                            <li>Configurar velocidad (TWBR y TWSR)</li>
+                            <li>Configurar dirección en modo esclavo (TWAR, opcional)</li>
+                            <li>Habilitar TWI (TWEN en TWCR)</li>
+                            <li>Opcional: Habilitar interrupciones (TWIE en TWCR)</li>
+                        </ol>
+                        
+                        <h3>Función de Inicialización</h3>
+                        
+                        <div class="code-block">
+                            <span class="comment">; Inicializar TWI como maestro</span><br>
+                            <span class="label">i2c_init:</span><br>
+                            <span class="comment">; Configurar velocidad (100kHz a 16MHz)</span><br>
+                            <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="number">0</span>  <span class="comment">; Prescaler = 1</span><br>
+                            <span class="keyword">sts</span> <span class="register">TWSR</span>, <span class="register">r16</span><br>
+                            <span class="keyword">ldi</span> <span class="register">r16</span>, <span class="number">72</span>  <span class="comment">; TWBR = 72</span><br>
+                            <span class="keyword">sts</span> <span class="register">TWBR</span>, <span class="register">r16</span><br>
+                            <span class="comment">; Habilitar TWI</span><br>
+                            <span class="keyword">ldi</span> <span class="register">r16</span>, (1&lt;&lt;TWEN)<br>
+                            <span class="keyword">sts</span> <span class="register">TWCR</span>, <span class="register">r16</span><br>
+                            <span class="keyword">ret</span>
+                        </div>
+                    </div>
+                    <div class="presentation-footer">
+                        La inicialización debe realizarse antes de cualquier operación de comunicación
+                    </div>
+                </div>
+                
+                <!-- Presentación 5 -->
+                <div class="presentation">
+                    <div class="presentation-header">
+                        <h2>Transmisión de Datos</h2>
+                    </div>
+                    <div class="presentation-content">
+                        <h3>Secuencia de Transmisión</h3>
+                        <ol>
+                            <li>Enviar condición START</li>
+                            <li>Enviar dirección del esclavo + bit de escritura</li>
+                            <li>Esperar ACK del esclavo</li>
+                            <li>Enviar datos</li>
+                            <li>Repetir paso 4 para más datos</li>
+                            <li>Enviar condición STOP</li>
+                        </ol>
+                        
+                        <h3>Función de Transmisión</h3>
+                        
+                        <div class="code-block">
+                            <span class="comment">; Transmitir datos por I2C</span><br>
+                            <span class="comment">; Entrada: r17 - dirección esclavo + W, r16 - dato</span><br>
+                            <span class="label">i2c_send:</span><br>
+                            <span class="comment">; Enviar START</span><br>
+                            <span class="keyword">ldi</span> <span class="register">r18</span>, (1&lt;&lt;TWINT)|(1&lt;&lt;TWSTA)|(1&lt;&lt;TWEN)<br>
+                            <span class="keyword">sts</span> <span class="register">TWCR</span>, <span class="register">r18</span><br>
+                            <span class="label">i2c_wait1:</span><br>
+                            <span class="keyword">lds</span> <span class="register">r18</span>, <span class="register">TWCR</span><br>
+                            <span class="keyword">sbrs</span> <span class="register">r18</span>, <span class="register">TWINT</span><br>
+                            <span class="keyword">rjmp</span> <span class="label">i2c_wait1</span><br>
+                            <span class="comment">; Enviar dirección + W</span><br>
+                            <span class="keyword">sts</span> <span class="register">TWDR</span>, <span class="register">r17</span><br>
+                            <span class="keyword">ldi</span> <span class="register">r18</span>, (1&lt;&lt;TWINT)|(1&lt;&lt;TWEN)<br>
+                            <span class="keyword">sts</span> <span class="register">TWCR</span>, <span class="register">r18</span><br>
+                            <span class="comment">; ... continuar con envío de datos y STOP</span>
+                        </div>
+                    </div>
+                    <div class="presentation-footer">
+                        La transmisión requiere verificación constante del estado del bus
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECCIÓN DE C -->
+        <div class="lang-section" id="c-section">
+            <div class="presentation-container">
+                <!-- Presentación 1 -->
+                <div class="presentation">
+                    <div class="presentation-header">
+                        <h2>I2C en C con AVR Libc</h2>
+                    </div>
+                    <div class="presentation-content">
+                        <h3>Ventajas de usar C</h3>
+                        <ul>
+                            <li>Código más legible y mantenible</li>
+                            <li>Librerías estándar disponibles</li>
+                            <li>Abstracción de hardware</li>
+                            <li>Desarrollo más rápido</li>
+                            <li>Portabilidad entre microcontroladores</li>
+                        </ul>
+                        
+                        <h3>Librerías Principales</h3>
+                        <ul>
+                            <li>avr/io.h: Definiciones de registros</li>
+                            <li>util/twi.h: Funciones para TWI</li>
+                            <li>avr/interrupt.h: Manejo de interrupciones</li>
+                            <li>util/delay.h: Funciones de retardo</li>
+                        </ul>
+                    </div>
+                    <div class="presentation-footer">
+                        El uso de C simplifica el desarrollo de aplicaciones complejas
+                    </div>
+                </div>
+                
+                <!-- Presentación 2 -->
+                <div class="presentation">
+                    <div class="presentation-header">
+                        <h2>Inicialización en C</h2>
+                    </div>
+                    <div class="presentation-content">
+                        <h3>Configuración de Velocidad</h3>
+                        <ul>
+                            <li>Función twi_init() para configurar velocidad</li>
+                            <li>Cálculo automático de TWBR</li>
+                            <li>Definición de constantes para velocidades estándar</li>
+                        </ul>
+                        
+                        <h3>Código de Inicialización</h3>
+                        
+                        <div class="code-block">
+                            <span class="directive">#include</span> <span class="string">&lt;avr/io.h&gt;</span><br>
+                            <span class="directive">#include</span> <span class="string">&lt;util/twi.h&gt;</span><br><br>
+                            
+                            <span class="comment">// Inicializar I2C como maestro</span><br>
+                            <span class="keyword">void</span> <span class="function">i2c_init</span>(<span class="keyword">void</span>) {<br>
+                            &nbsp;&nbsp;<span class="comment">// Configurar velocidad a 100kHz</span><br>
+                            &nbsp;&nbsp;TWSR = <span class="number">0x00</span>;  <span class="comment">// Prescaler = 1</span><br>
+                            &nbsp;&nbsp;TWBR = <span class="number">0x48</span>;  <span class="comment">// 72 decimal</span><br>
+                            &nbsp;&nbsp;<span class="comment">// Habilitar TWI</span><br>
+                            &nbsp;&nbsp;TWCR = (<span class="number">1</span> &lt;&lt; TWEN);<br>
+                            }
+                        </div>
+                        
+                        <h3>Usando la librería TWI</h3>
+                        <div class="code-block">
+                            <span class="comment">// Alternativa usando util/twi.h</span><br>
+                            <span class="directive">#include</span> <span class="string">&lt;util/twi.h&gt;</span><br><br>
+                            
+                            <span class="keyword">void</span> <span class="function">i2c_init</span>(<span class="keyword">void</span>) {<br>
+                            &nbsp;&nbsp;<span class="comment">// Inicializar TWI a 100kHz</span><br>
+                            &nbsp;&nbsp;twi_setFrequency(<span class="number">100000</span>);<br>
+                            &nbsp;&nbsp;twi_init();<br>
+                            }
+                        </div>
+                    </div>
+                    <div class="presentation-footer">
+                        La inicialización en C es más sencilla gracias a las funciones de librería
+                    </div>
+                </div>
+                
+                <!-- Presentación 3 -->
+                <div class="presentation">
+                    <div class="presentation-header">
+                        <h2>Transmisión de Datos en C</h2>
+                    </div>
+                    <div class="presentation-content">
+                        <h3>Función de Transmisión</h3>
+                        <ul>
+                            <li>Uso de funciones de librería o implementación propia</li>
+                            <li>Manejo de estados del bus I2C</li>
+                            <li>Gestión de errores</li>
+                        </ul>
+                        
+                        <h3>Ejemplo de Transmisión</h3>
+                        
+                        <div class="code-block">
+                            <span class="comment">// Transmitir datos por I2C</span><br>
+                            <span class="keyword">uint8_t</span> <span class="function">i2c_send</span>(<span class="keyword">uint8_t</span> address, <span class="keyword">uint8_t</span> data) {<br>
+                            &nbsp;&nbsp;<span class="comment">// Enviar condición START</span><br>
+                            &nbsp;&nbsp;TWCR = (<span class="number">1</span> &lt;&lt; TWINT) | (<span class="number">1</span> &lt;&lt; TWSTA) | (<span class="number">1</span> &lt;&lt; TWEN);<br>
+                            &nbsp;&nbsp;<span class="keyword">while</span> (!(TWCR &amp; (<span class="number">1</span> &lt;&lt; TWINT)));<br>
+                            &nbsp;&nbsp;<br>
+                            &nbsp;&nbsp;<span class="comment">// Verificar estado</span><br>
+                            &nbsp;&nbsp;<span class="keyword">if</span> ((TWSR &amp; <span class="number">0xF8</span>) != TW_START) <span class="keyword">return</span> <span class="number">1</span>;<br>
+                            &nbsp;&nbsp;<br>
+                            &nbsp;&nbsp;<span class="comment">// Enviar dirección + escritura</span><br>
+                            &nbsp;&nbsp;TWDR = (address &lt;&lt; <span class="number">1</span>) | TW_WRITE;<br>
+                            &nbsp;&nbsp;TWCR = (<span class="number">1</span> &lt;&lt; TWINT) | (<span class="number">1</span> &lt;&lt; TWEN);<br>
+                            &nbsp;&nbsp;<span class="keyword">while</span> (!(TWCR &amp; (<span class="number">1</span> &lt;&lt; TWINT)));<br>
+                            &nbsp;&nbsp;<br>
+                            &nbsp;&nbsp;<span class="comment">// ... continuar con envío de datos</span><br>
+                            &nbsp;&nbsp;<span class="keyword">return</span> <span class="number">0</span>; <span class="comment">// Éxito</span><br>
+                            }
+                        </div>
+                    </div>
+                    <div class="presentation-footer">
+                        La transmisión en C permite un código más estructurado con manejo de errores
+                    </div>
+                </div>
+                
+                <!-- Presentación 4 -->
+                <div class="presentation">
+                    <div class="presentation-header">
+                        <h2>Recepción de Datos en C</h2>
+                    </div>
+                    <div class="presentation-content">
+                        <h3>Secuencia de Recepción</h3>
+                        <ol>
+                            <li>Enviar condición START</li>
+                            <li>Enviar dirección del esclavo + bit de lectura</li>
+                            <li>Recibir datos con ACK</li>
+                            <li>Recibir último dato con NACK</li>
+                            <li>Enviar condición STOP</li>
+                        </ol>
+                        
+                        <h3>Función de Recepción</h3>
+                        
+                        <div class="code-block">
+                            <span class="comment">// Recibir datos por I2C</span><br>
+                            <span class="keyword">uint8_t</span> <span class="function">i2c_receive</span>(<span class="keyword">uint8_t</span> address, <span class="keyword">uint8_t</span> *data, <span class="keyword">uint8_t</span> length) {<br>
+                            &nbsp;&nbsp;<span class="comment">// Enviar START</span><br>
+                            &nbsp;&nbsp;TWCR = (<span class="number">1</span> &lt;&lt; TWINT) | (<span class="number">1</span> &lt;&lt; TWSTA) | (<span class="number">1</span> &lt;&lt; TWEN);<br>
+                            &nbsp;&nbsp;<span class="keyword">while</span> (!(TWCR &amp; (<span class="number">1</span> &lt;&lt; TWINT)));<br>
+                            &nbsp;&nbsp;<br>
+                            &nbsp;&nbsp;<span class="comment">// Verificar estado</span><br>
+                            &nbsp;&nbsp;<span class="keyword">if</span> ((TWSR &amp; <span class="number">0xF8</span>) != TW_START) <span class="keyword">return</span> <span class="number">1</span>;<br>
+                            &nbsp;&nbsp;<br>
+                            &nbsp;&nbsp;<span class="comment">// Enviar dirección + lectura</span><br>
+                            &nbsp;&nbsp;TWDR = (address &lt;&lt; <span class="number">1</span>) | TW_READ;<br>
+                            &nbsp;&nbsp;TWCR = (<span class="number">1</span> &lt;&lt; TWINT) | (<span class="number">1</span> &lt;&lt; TWEN);<br>
+                            &nbsp;&nbsp;<span class="keyword">while</span> (!(TWCR &amp; (<span class="number">1</span> &lt;&lt; TWINT)));<br>
+                            &nbsp;&nbsp;<br>
+                            &nbsp;&nbsp;<span class="comment">// Recibir datos</span><br>
+                            &nbsp;&nbsp;<span class="keyword">for</span> (<span class="keyword">uint8_t</span> i = <span class="number">0</span>; i &lt; length; i++) {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (i == length - <span class="number">1</span>) {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Último byte - enviar NACK</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TWCR = (<span class="number">1</span> &lt;&lt; TWINT) | (<span class="number">1</span> &lt;&lt; TWEN);<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;} <span class="keyword">else</span> {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Enviar ACK</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TWCR = (<span class="number">1</span> &lt;&lt; TWINT) | (<span class="number">1</span> &lt;&lt; TWEN) | (<span class="number">1</span> &lt;&lt; TWEA);<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">while</span> (!(TWCR &amp; (<span class="number">1</span> &lt;&lt; TWINT)));<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;data[i] = TWDR;<br>
+                            &nbsp;&nbsp;}<br>
+                            &nbsp;&nbsp;<br>
+                            &nbsp;&nbsp;<span class="comment">// Enviar STOP</span><br>
+                            &nbsp;&nbsp;TWCR = (<span class="number">1</span> &lt;&lt; TWINT) | (<span class="number">1</span> &lt;&lt; TWEN) | (<span class="number">1</span> &lt;&lt; TWSTO);<br>
+                            &nbsp;&nbsp;<span class="keyword">return</span> <span class="number">0</span>; <span class="comment">// Éxito</span><br>
+                            }
+                        </div>
+                    </div>
+                    <div class="presentation-footer">
+                        La recepción requiere manejar correctamente los bits ACK/NACK
+                    </div>
+                </div>
+                
+                <!-- Presentación 5 -->
+                <div class="presentation">
+                    <div class="presentation-header">
+                        <h2>Comunicación con Dispositivos I2C</h2>
+                    </div>
+                    <div class="presentation-content">
+                        <h3>Dispositivos Comunes</h3>
+                        <ul>
+                            <li>Memorias EEPROM (24Cxx)</li>
+                            <li>Sensores de temperatura (LM75, TMP102)</li>
+                            <li>Acelerómetros (MPU6050)</li>
+                            <li>Pantallas OLED (SSD1306)</li>
+                            <li>Relojes de tiempo real (DS1307, PCF8563)</li>
+                        </ul>
+                        
+                        <h3>Ejemplo con EEPROM</h3>
+                        
+                        <div class="code-block">
+                            <span class="comment">// Escribir en memoria EEPROM 24C02</span><br>
+                            <span class="keyword">void</span> <span class="function">eeprom_write</span>(<span class="keyword">uint8_t</span> address, <span class="keyword">uint8_t</span> data) {<br>
+                            &nbsp;&nbsp;<span class="comment">// Dirección del dispositivo</span><br>
+                            &nbsp;&nbsp;<span class="keyword">uint8_t</span> dev_addr = <span class="number">0xA0</span>; <span class="comment">// 1010000 + 0 (write)</span><br>
+                            &nbsp;&nbsp;<br>
+                            &nbsp;&nbsp;<span class="comment">// Iniciar transmisión</span><br>
+                            &nbsp;&nbsp;i2c_start();<br>
+                            &nbsp;&nbsp;i2c_send_byte(dev_addr);<br>
+                            &nbsp;&nbsp;i2c_send_byte(address); <span class="comment">// Dirección de memoria</span><br>
+                            &nbsp;&nbsp;i2c_send_byte(data);<br>
+                            &nbsp;&nbsp;i2c_stop();<br>
+                            &nbsp;&nbsp;<br>
+                            &nbsp;&nbsp;<span class="comment">// Esperar fin de escritura</span><br>
+                            &nbsp;&nbsp;delay_ms(<span class="number">5</span>);<br>
+                            }
+                        </div>
+                    </div>
+                    <div class="presentation-footer">
+                        Cada dispositivo I2C tiene su propio protocolo de comunicación
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="i2c-demo">
+            <h2>Simulador de Comunicación I2C</h2>
+            
+            <div class="i2c-visualization">
+                <div class="i2c-diagram">
+                    <h3>Conexión I2C</h3>
+                    <div class="pin-connection">
+                        <div class="pin">SDA</div>
+                        <div class="connection-line"></div>
+                        <div class="pin">SDA</div>
+                    </div>
+                    <div class="pin-connection">
+                        <div class="pin">SCL</div>
+                        <div class="connection-line"></div>
+                        <div class="pin">SCL</div>
+                    </div>
+                    <div class="pin-connection">
+                        <div class="pin">GND</div>
+                        <div class="connection-line"></div>
+                        <div class="pin">GND</div>
+                    </div>
+                    <div class="i2c-graphic">
+                        <h4>Señal I2C</h4>
+                        <div class="signal-wave">
+                            <div class="sda-wave"></div>
+                            <div class="scl-wave"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="i2c-config">
+                    <h3>Configuración</h3>
+                    <div class="register-config">
+                        <h4>Registros TWI</h4>
+                        <div class="register-item">
+                            <span>TWBR:</span>
+                            <span>72 (0x48)</span>
+                        </div>
+                        <div class="register-item">
+                            <span>TWSR:</span>
+                            <span>0x00</span>
+                        </div>
+                        <div class="register-item">
+                            <span>TWCR:</span>
+                            <span>0x04</span>
+                        </div>
+                        <div class="register-item">
+                            <span>Frecuencia SCL:</span>
+                            <span>100 kHz</span>
+                        </div>
+                    </div>
+                    
+                    <div class="operation-buttons">
+                        <button class="btn" onclick="simulateTransmission()">Simular Transmisión</button>
+                        <button class="btn" onclick="simulateReception()">Simular Recepción</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="operation-log" id="i2c-log">
+                > Sistema I2C inicializado<br>
+                > Frecuencia: 100 kHz<br>
+                > Modo: Maestro<br>
+                > Esperando operaciones...
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="#" class="btn" onclick="downloadFile()">
+                <i class="fas fa-download"></i> Descargar Presentación Completa
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Funcionalidad para cambiar entre lenguajes
+        function showLanguage(lang) {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            document.querySelector(`.lang-btn[onclick="showLanguage('${lang}')"]`).classList.add('active');
+            document.getElementById(`${lang}-section`).classList.add('active');
+        }
+        
+        // Simulación de transmisión I2C
+        function simulateTransmission() {
+            const log = document.getElementById('i2c-log');
+            log.innerHTML += '<br>> Iniciando transmisión...';
+            log.innerHTML += '<br>> Enviando START condition';
+            log.innerHTML += '<br>> Enviando dirección: 0x48 + W';
+            log.innerHTML += '<br>> Recibido ACK';
+            log.innerHTML += '<br>> Enviando dato: 0x55';
+            log.innerHTML += '<br>> Recibido ACK';
+            log.innerHTML += '<br>> Enviando STOP condition';
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function simulateReception() {
+            const log = document.getElementById('i2c-log');
+            log.innerHTML += '<br>> Iniciando recepción...';
+            log.innerHTML += '<br>> Enviando START condition';
+            log.innerHTML += '<br>> Enviando dirección: 0x48 + R';
+            log.innerHTML += '<br>> Recibido ACK';
+            log.innerHTML += '<br>> Recibiendo dato: 0xAA';
+            log.innerHTML += '<br>> Enviando NACK';
+            log.innerHTML += '<br>> Enviando STOP condition';
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function downloadFile() {
+            const content = document.documentElement.outerHTML;
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'presentacion_i2c_atmega328p.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
