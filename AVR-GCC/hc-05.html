@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bluetooth HC-05 - Comandos AT y Configuración</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 25px;
+            min-height: 350px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            border-bottom: 2px solid;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 18px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .bluetooth-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .bluetooth-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .bluetooth-config {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .config-section {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .config-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+        }
+        
+        .config-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        .command-display {
+            background: #2d3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .bluetooth-status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: #e8f4fc;
+        }
+        
+        .status-connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .bluetooth-config {
+                flex-direction: column;
+            }
+            
+            .config-section {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Módulo Bluetooth HC-05</h1>
+            <p class="subtitle">Aprende a configurar y utilizar el módulo HC-05 mediante comandos AT para cambiar nombre, contraseña y comunicación de datos</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Tarjeta 1 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #3498db;">
+                    <h2>Introducción al HC-05</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #3498db;">¿Qué es el HC-05?</h3>
+                    <ul>
+                        <li style="color: #3498db;">Módulo Bluetooth de bajo costo</li>
+                        <li style="color: #3498db;">Compatible con dispositivos Android/iOS</li>
+                        <li style="color: #3498db;">Funciona en modo esclavo y maestro</li>
+                        <li style="color: #3498db;">Comunicación serie UART</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #3498db;">Características principales</h3>
+                    <ul>
+                        <li style="color: #3498db;">Versión Bluetooth 2.0 + EDR</li>
+                        <li style="color: #3498db;">Alcance: ~10 metros</li>
+                        <li style="color: #3498db;">Voltaje: 3.3V - 5V</li>
+                        <li style="color: #3498db;">Velocidad: 9600 bps por defecto</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Ideal para proyectos IoT y control remoto
+                </div>
+            </div>
+            
+            <!-- Tarjeta 2 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #e74c3c;">
+                    <h2>Comandos AT Básicos</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #e74c3c;">Modo Comando AT</h3>
+                    <ul>
+                        <li style="color: #e74c3c;">Presionar botón antes de conectar</li>
+                        <li style="color: #e74c3c;">LED parpadea lentamente (2 veces/seg)</li>
+                        <li style="color: #e74c3c;">Velocidad: 38400 bps</li>
+                        <li style="color: #e74c3c;">Formato: AT+COMANDO</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #e74c3c;">Comandos esenciales</h3>
+                    <ul>
+                        <li style="color: #e74c3c;">AT - Comando de prueba</li>
+                        <li style="color: #e74c3c;">AT+VERSION - Consultar versión</li>
+                        <li style="color: #e74c3c;">AT+NAME? - Consultar nombre</li>
+                        <li style="color: #e74c3c;">AT+UART? - Consultar parámetros UART</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Respuesta OK indica comando exitoso
+                </div>
+            </div>
+            
+            <!-- Tarjeta 3 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #2ecc71;">
+                    <h2>Cambiar Nombre</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #2ecc71;">Comando para nombre</h3>
+                    <ul>
+                        <li style="color: #2ecc71;">AT+NAME=nuevo_nombre</li>
+                        <li style="color: #2ecc71;">Máximo 20 caracteres</li>
+                        <li style="color: #2ecc71;">Sin espacios ni caracteres especiales</li>
+                        <li style="color: #2ecc71;">Ejemplo: AT+NAME=MiHC05</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #2ecc71;">Verificar cambio</h3>
+                    <ul>
+                        <li style="color: #2ecc71;">AT+NAME? - Consultar nombre actual</li>
+                        <li style="color: #2ecc71;">Respuesta: +NAME:nombre_actual</li>
+                        <li style="color: #2ecc71;">Reiniciar módulo para aplicar cambios</li>
+                    </ul>
+                    
+                    <div class="code-block">
+                        AT+NAME=RobotControl<br>
+                        OK<br><br>
+                        AT+NAME?<br>
+                        +NAME:RobotControl<br>
+                        OK
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    El nombre aparece al buscar dispositivos Bluetooth
+                </div>
+            </div>
+            
+            <!-- Tarjeta 4 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #f39c12;">
+                    <h2>Configurar Contraseña</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #f39c12;">Comando para PIN</h3>
+                    <ul>
+                        <li style="color: #f39c12;">AT+PSWD=contraseña</li>
+                        <li style="color: #f39c12;">Por defecto: 1234</li>
+                        <li style="color: #f39c12;">Máximo 4 dígitos numéricos</li>
+                        <li style="color: #f39c12;">Ejemplo: AT+PSWD=5678</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #f39c12;">Verificar PIN</h3>
+                    <ul>
+                        <li style="color: #f39c12;">AT+PSWD? - Consultar contraseña</li>
+                        <li style="color: #f39c12;">Respuesta: +PSWD:contraseña</li>
+                        <li style="color: #f39c12;">Se requiere al emparejar</li>
+                    </ul>
+                    
+                    <div class="code-block">
+                        AT+PSWD=9999<br>
+                        OK<br><br>
+                        AT+PSWD?<br>
+                        +PSWD:9999<br>
+                        OK
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Cambia la contraseña por seguridad
+                </div>
+            </div>
+            
+            <!-- Tarjeta 5 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #9b59b6;">
+                    <h2>Configuración UART</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #9b59b6;">Parámetros de comunicación</h3>
+                    <ul>
+                        <li style="color: #9b59b6;">AT+UART=baud,stop,parity</li>
+                        <li style="color: #9b59b6;">baud: 9600, 19200, 38400, etc.</li>
+                        <li style="color: #9b59b6;">stop: 0=1 bit, 1=2 bits</li>
+                        <li style="color: #9b59b6;">parity: 0=ninguna, 1=impar, 2=par</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #9b59b6;">Ejemplos comunes</h3>
+                    <ul>
+                        <li style="color: #9b59b6;">AT+UART=9600,0,0 - 9600 bps, 1 stop, sin paridad</li>
+                        <li style="color: #9b59b6;">AT+UART=115200,0,0 - Alta velocidad</li>
+                        <li style="color: #9b59b6;">AT+UART? - Consultar configuración</li>
+                    </ul>
+                    
+                    <div class="code-block">
+                        AT+UART=115200,0,0<br>
+                        OK<br><br>
+                        AT+UART?<br>
+                        +UART:115200,0,0<br>
+                        OK
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Velocidad debe coincidir en ambos lados
+                </div>
+            </div>
+            
+            <!-- Tarjeta 6 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #1abc9c;">
+                    <h2>Enviar y Recibir Datos</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #1abc9c;">Modo Transparente</h3>
+                    <ul>
+                        <li style="color: #1abc9c;">Sin botón presionado al conectar</li>
+                        <li style="color: #1abc9c;">LED parpadea rápido (1 vez/seg)</li>
+                        <li style="color: #1abc9c;">Datos se envían directamente</li>
+                        <li style="color: #1abc9c;">Sin formato AT+</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #1abc9c;">Ejemplo de uso</h3>
+                    <ul>
+                        <li style="color: #1abc9c;">Conectar desde app móvil</li>
+                        <li style="color: #1abc9c;">Enviar datos como texto plano</li>
+                        <li style="color: #1abc9c;">Microcontrolador procesa datos</li>
+                        <li style="color: #1abc9c;">Respuesta automática</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Comunicación bidireccional en tiempo real
+                </div>
+            </div>
+            
+            <!-- Tarjeta 7 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #d35400;">
+                    <h2>Modo Maestro/Esclavo</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #d35400;">Configurar rol</h3>
+                    <ul>
+                        <li style="color: #d35400;">AT+ROLE=0 - Modo esclavo</li>
+                        <li style="color: #d35400;">AT+ROLE=1 - Modo maestro</li>
+                        <li style="color: #d35400;">AT+ROLE=2 - Modo esclavo-loop</li>
+                        <li style="color: #d35400;">Por defecto: 0 (esclavo)</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #d35400;">Emparejamiento maestro</h3>
+                    <ul>
+                        <li style="color: #d35400;">AT+BIND= dirección_MAC</li>
+                        <li style="color: #d35400;">AT+CMODE=0 - Conexión fija</li>
+                        <li style="color: #d35400;">AT+INQM=1,9,48 - Búsqueda</li>
+                        <li style="color: #d35400;">AT+INIT - Inicializar perfil</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Modo maestro permite conexiones automáticas
+                </div>
+            </div>
+            
+            <!-- Tarjeta 8 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #34495e;">
+                    <h2>Reset y Restauración</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #34495e;">Comandos de gestión</h3>
+                    <ul>
+                        <li style="color: #34495e;">AT+RESET - Reiniciar módulo</li>
+                        <li style="color: #34495e;">AT+ORGL - Restaurar valores de fábrica</li>
+                        <li style="color: #34495e;">AT+ADDR? - Consultar dirección MAC</li>
+                        <li style="color: #34495e;">AT+STATE? - Estado de conexión</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #34495e;">Solución de problemas</h3>
+                    <ul>
+                        <li style="color: #34495e;">No responde: Verificar modo AT</li>
+                        <li style="color: #34495e;">Sin conexión: Revisar velocidad</li>
+                        <li style="color: #34495e;">Error: Usar AT+ORGL</li>
+                        <li style="color: #34495e;">Sin datos: Verificar emparejamiento</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    AT+ORGL restablece nombre y PIN por defecto
+                </div>
+            </div>
+            
+            <!-- Tarjeta 9 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #27ae60;">
+                    <h2>Ejemplo Práctico</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #27ae60;">Configuración completa</h3>
+                    <div class="code-block">
+                        AT+NAME=MiProyecto<br>
+                        OK<br>
+                        AT+PSWD=4321<br>
+                        OK<br>
+                        AT+UART=9600,0,0<br>
+                        OK<br>
+                        AT+ROLE=0<br>
+                        OK<br>
+                        AT+RESET<br>
+                        OK
+                    </div>                                        
+                </div>
+                <div class="presentation-footer">
+                    Listo para comunicación bidireccional
+                </div>
+            </div>
+        </div>
+        
+        <div class="bluetooth-demo">
+            <h2>Simulador de Comandos AT</h2>
+            
+            <div class="bluetooth-config">
+                <div class="config-section">
+                    <h3>Configurar Nombre</h3>
+                    <input type="text" id="bt-name" class="config-input" placeholder="Nuevo nombre (ej: MiHC05)" maxlength="20">
+                    <button class="btn" onclick="generateNameCommand()">Generar Comando</button>
+                    <div class="command-display" id="name-command">AT+NAME=</div>
+                </div>
+                
+                <div class="config-section">
+                    <h3>Configurar Contraseña</h3>
+                    <input type="text" id="bt-password" class="config-input" placeholder="Nuevo PIN (4 dígitos)" maxlength="4" pattern="[0-9]*">
+                    <button class="btn" onclick="generatePasswordCommand()">Generar Comando</button>
+                    <div class="command-display" id="password-command">AT+PSWD=</div>
+                </div>
+                
+                <div class="config-section">
+                    <h3>Configurar Velocidad</h3>
+                    <select id="bt-baud" class="config-input">
+                        <option value="9600">9600 bps</option>
+                        <option value="19200">19200 bps</option>
+                        <option value="38400">38400 bps</option>
+                        <option value="57600">57600 bps</option>
+                        <option value="115200">115200 bps</option>
+                    </select>
+                    <button class="btn" onclick="generateUARTCommand()">Generar Comando</button>
+                    <div class="command-display" id="uart-command">AT+UART=9600,0,0</div>
+                </div>
+            </div>
+            
+            <div class="bluetooth-status" id="connection-status">
+                <h3>Estado de Conexión</h3>
+                <p>Módulo Bluetooth: <span id="status-text">Desconectado</span></p>
+                <button class="btn" onclick="toggleConnection()" id="connect-btn">Conectar</button>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 10px;">
+            <a href="../Codigos/C/Bluetooth_HC-05.c" class="btn" download>
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+        </div> 
+        <div style="text-align: center; margin-top: 10px;">            
+            <a href="javascript:history.back()" class="btn" style="background: #7f8c8d;">
+                <i class="fas fa-arrow-left"></i> Volver Atrás
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de comandos AT
+        function generateNameCommand() {
+            const name = document.getElementById('bt-name').value;
+            if (name) {
+                document.getElementById('name-command').textContent = `AT+NAME=${name}`;
+            } else {
+                document.getElementById('name-command').textContent = 'AT+NAME=';
+            }
+        }
+        
+        function generatePasswordCommand() {
+            const password = document.getElementById('bt-password').value;
+            if (password && /^\d{4}$/.test(password)) {
+                document.getElementById('password-command').textContent = `AT+PSWD=${password}`;
+            } else {
+                document.getElementById('password-command').textContent = 'AT+PSWD=';
+            }
+        }
+        
+        function generateUARTCommand() {
+            const baud = document.getElementById('bt-baud').value;
+            document.getElementById('uart-command').textContent = `AT+UART=${baud},0,0`;
+        }
+        
+        // Simulación de conexión
+        let isConnected = false;
+        
+        function toggleConnection() {
+            const statusDiv = document.getElementById('connection-status');
+            const statusText = document.getElementById('status-text');
+            const connectBtn = document.getElementById('connect-btn');
+            
+            if (!isConnected) {
+                statusDiv.classList.remove('status-disconnected');
+                statusDiv.classList.add('status-connected');
+                statusText.textContent = 'Conectado';
+                connectBtn.textContent = 'Desconectar';
+                isConnected = true;
+            } else {
+                statusDiv.classList.remove('status-connected');
+                statusDiv.classList.add('status-disconnected');
+                statusText.textContent = 'Desconectado';
+                connectBtn.textContent = 'Conectar';
+                isConnected = false;
+            }
+        }
+        
+        // Inicializar
+        document.getElementById('bt-name').addEventListener('input', generateNameCommand);
+        document.getElementById('bt-password').addEventListener('input', generatePasswordCommand);
+        document.getElementById('bt-baud').addEventListener('change', generateUARTCommand);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEDs WS2812 con AVR-GCC - Protocolo y Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c2461, #1e3799);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3em;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .presentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .presentation:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+        }
+        
+        .presentation-header {
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .presentation-header h2 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        
+        .presentation-content {
+            padding: 25px;
+            min-height: 350px;
+        }
+        
+        .presentation-content h3 {
+            color: #2c3e50;
+            margin-bottom: 18px;
+            border-bottom: 2px solid;
+            padding-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .presentation-content ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .presentation-content li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .presentation-content li:before {
+            content: "•";
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.4em;
+        }
+        
+        .presentation-footer {
+            background: #f8f9fa;
+            padding: 18px;
+            text-align: center;
+            font-style: italic;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .code-block {
+            background: #2d3e50;
+            color: #f8f8f2;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 18px 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .keyword {
+            color: #f92672;
+        }
+        
+        .comment {
+            color: #75715e;
+        }
+        
+        .function {
+            color: #a6e22e;
+        }
+        
+        .define {
+            color: #fd971f;
+        }
+        
+        .include {
+            color: #66d9ef;
+        }
+        
+        .highlight {
+            background-color: #ffeb3b;
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .led-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .led-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .led-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .control-section {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .control-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+        }
+        
+        .color-picker {
+            width: 100%;
+            height: 50px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .slider-container {
+            margin: 15px 0;
+        }
+        
+        .slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .led-strip {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .led {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #222;
+            border: 2px solid #555;
+            transition: all 0.3s ease;
+        }
+        
+        .protocol-timing {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 40px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .timing-diagram {
+            background: #2d3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .signal-high {
+            color: #ffeb3b;
+            font-weight: bold;
+        }
+        
+        .signal-low {
+            color: #2196f3;
+            font-weight: bold;
+        }
+        
+        .data-stream {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .assembly-code {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .assembly-label {
+            color: #569cd6;
+        }
+        
+        .assembly-instruction {
+            color: #dcdcaa;
+        }
+        
+        .assembly-comment {
+            color: #6a9955;
+        }
+        
+        @media (max-width: 768px) {
+            .presentation {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+            }
+            
+            .led-controls {
+                flex-direction: column;
+            }
+            
+            .control-section {
+                width: 100%;
+            }
+            
+            .led {
+                width: 25px;
+                height: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LEDs WS2812 con AVR-GCC</h1>
+            <p class="subtitle">Control directo de LEDs WS2812 usando AVR-GCC puro, sin librerías de Arduino</p>
+        </header>
+        
+        <div class="presentation-container">
+            <!-- Tarjeta 1 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #e74c3c;">
+                    <h2>Introducción WS2812</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #e74c3c;">Características</h3>
+                    <ul>
+                        <li style="color: #e74c3c;">Protocolo de comunicación de un solo cable</li>
+                        <li style="color: #e74c3c;">Timing crítico en nanosegundos</li>
+                        <li style="color: #e74c3c;">Formato de datos GRB (24 bits/LED)</li>
+                        <li style="color: #e74c3c;">Cascada automática de datos</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #e74c3c;">Requisitos AVR</h3>
+                    <ul>
+                        <li style="color: #e74c3c;">AVR-GCC sin _delay_us()</li>
+                        <li style="color: #e74c3c;">Código assembly inline para precisión</li>
+                        <li style="color: #e74c3c;">Deshabilitar interrupciones durante transmisión</li>
+                        <li style="color: #e74c3c;">Optimización -O2 o -O3</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Timing preciso requiere código optimizado
+                </div>
+            </div>
+            
+            <!-- Tarjeta 2 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #3498db;">
+                    <h2>Configuración de Pines</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #3498db;">Definiciones AVR</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Configuración para ATmega328P</span><br>
+                        <span class="define">#define</span> F_CPU 16000000UL<br>
+                        <span class="define">#include</span> <span class="include">&lt;avr/io.h&gt;</span><br>
+                        <span class="define">#include</span> <span class="include">&lt;util/delay.h&gt;</span><br><br>
+                        
+                        <span class="comment">// Puerto y pin para WS2812</span><br>
+                        <span class="define">#define</span> WS2812_PORT PORTB<br>
+                        <span class="define">#define</span> WS2812_DDR  DDRB<br>
+                        <span class="define">#define</span> WS2812_PIN  PB0<br><br>
+                        
+                        <span class="comment">// Número de LEDs</span><br>
+                        <span class="define">#define</span> NUM_LEDS 16
+                    </div>
+                    
+                    <h3 style="border-color: #3498db;">Inicialización</h3>
+                    <div class="code-block">
+                        <span class="keyword">void</span> <span class="function">ws2812_init</span>(<span class="keyword">void</span>) {<br>
+                        &nbsp;&nbsp;WS2812_DDR |= (<span class="number">1</span> << WS2812_PIN);<br>
+                        &nbsp;&nbsp;WS2812_PORT &= ~(<span class="number">1</span> << WS2812_PIN);<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Configurar pin como salida
+                </div>
+            </div>
+            
+            <!-- Tarjeta 3 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #2ecc71;">
+                    <h2>Timing Crítico</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #2ecc71;">Especificaciones</h3>
+                    <ul>
+                        <li style="color: #2ecc71;">Bit '0': HIGH 0.4μs ± 150ns</li>
+                        <li style="color: #2ecc71;">Bit '1': HIGH 0.8μs ± 150ns</li>
+                        <li style="color: #2ecc71;">Periodo total: 1.25μs</li>
+                        <li style="color: #2ecc71;">Reset: LOW >50μs</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #2ecc71;">Ciclos de CPU</h3>
+                    <ul>
+                        <li style="color: #2ecc71;">16MHz = 62.5ns por ciclo</li>
+                        <li style="color: #2ecc71;">Bit '0': ~6 ciclos HIGH</li>
+                        <li style="color: #2ecc71;">Bit '1': ~13 ciclos HIGH</li>
+                        <li style="color: #2ecc71;">Reset: ~800 ciclos LOW</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    Assembly inline para precisión de ciclos
+                </div>
+            </div>
+            
+            <!-- Tarjeta 4 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #f39c12;">
+                    <h2>Función de Envío Assembly</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #f39c12;">Código Optimizado</h3>
+                    
+                    <div class="assembly-code">
+                        <span class="assembly-comment">; Enviar un byte por WS2812</span><br>
+                        <span class="assembly-comment">; Entrada: r24 = byte a enviar</span><br>
+                        ws2812_send_byte:<br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">ldi</span> r25, 8 <span class="assembly-comment">; 8 bits por byte</span><br>
+                        send_bit:<br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">sbi</span> WS2812_PORT, WS2812_PIN <span class="assembly-comment">; HIGH (2 ciclos)</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">lsl</span> r24 <span class="assembly-comment">; MSB a carry (1 ciclo)</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">brcs</span> bit_1 <span class="assembly-comment">; (1/2 ciclos)</span><br>
+                        <span class="assembly-comment">; Bit 0 (6 ciclos HIGH)</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">cbi</span> WS2812_PORT, WS2812_PIN <span class="assembly-comment">; LOW (2 ciclos)</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">rjmp</span> next_bit<br>
+                        bit_1: <span class="assembly-comment">; Bit 1 (13 ciclos HIGH)</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">cbi</span> WS2812_PORT, WS2812_PIN<br>
+                        next_bit:<br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">dec</span> r25<br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">brne</span> send_bit<br>
+                        &nbsp;&nbsp;<span class="assembly-instruction">ret</span>
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Timing exacto mediante NOPs
+                </div>
+            </div>
+            
+            <!-- Tarjeta 5 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #9b59b6;">
+                    <h2>Estructura de Datos</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #9b59b6;">Buffer de LEDs</h3>
+                    
+                    <div class="code-block">
+                        <span class="comment">// Estructura de datos para LEDs</span><br>
+                        <span class="keyword">typedef struct</span> {<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> g; <span class="comment">// Verde</span><br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> r; <span class="comment">// Rojo</span><br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> b; <span class="comment">// Azul</span><br>
+                        } ws2812_led_t;<br><br>
+                        
+                        <span class="comment">// Buffer para todos los LEDs</span><br>
+                        ws2812_led_t leds[NUM_LEDS];
+                    </div>
+                    
+                    <h3 style="border-color: #9b59b6;">Función de Actualización</h3>
+                    
+                    <div class="code-block">
+                        <span class="keyword">void</span> <span class="function">ws2812_update</span>(<span class="keyword">void</span>) {<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> sreg = SREG; <span class="comment">// Guardar estado interrupciones</span><br>
+                        &nbsp;&nbsp;cli(); <span class="comment">// Deshabilitar interrupciones</span><br><br>
+                        
+                        &nbsp;&nbsp;<span class="keyword">for</span> (<span class="keyword">uint8_t</span> i = <span class="number">0</span>; i < NUM_LEDS; i++) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;ws2812_send_byte(leds[i].g);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;ws2812_send_byte(leds[i].r);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;ws2812_send_byte(leds[i].b);<br>
+                        &nbsp;&nbsp;}<br><br>
+                        
+                        &nbsp;&nbsp;<span class="comment">// Señal de reset</span><br>
+                        &nbsp;&nbsp;_delay_us(<span class="number">60</span>);<br>
+                        &nbsp;&nbsp;SREG = sreg; <span class="comment">// Restaurar interrupciones</span><br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Orden GRB, no RGB
+                </div>
+            </div>
+            
+            <!-- Tarjeta 6 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #1abc9c;">
+                    <h2>Funciones de Utilidad</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #1abc9c;">Configurar Color</h3>
+                    
+                    <div class="code-block">
+                        <span class="keyword">void</span> <span class="function">ws2812_set_color</span>(<span class="keyword">uint8_t</span> led_num, <span class="keyword">uint8_t</span> r, <span class="keyword">uint8_t</span> g, <span class="keyword">uint8_t</span> b) {<br>
+                        &nbsp;&nbsp;<span class="keyword">if</span> (led_num < NUM_LEDS) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;leds[led_num].r = r;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;leds[led_num].g = g;<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;leds[led_num].b = b;<br>
+                        &nbsp;&nbsp;}<br>
+                        }<br><br>
+                        
+                        <span class="keyword">void</span> <span class="function">ws2812_set_all</span>(<span class="keyword">uint8_t</span> r, <span class="keyword">uint8_t</span> g, <span class="keyword">uint8_t</span> b) {<br>
+                        &nbsp;&nbsp;<span class="keyword">for</span> (<span class="keyword">uint8_t</span> i = <span class="number">0</span>; i < NUM_LEDS; i++) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;ws2812_set_color(i, r, g, b);<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                    
+                    <h3 style="border-color: #1abc9c;">Limpiar LEDs</h3>
+                    <div class="code-block">
+                        <span class="keyword">void</span> <span class="function">ws2812_clear</span>(<span class="keyword">void</span>) {<br>
+                        &nbsp;&nbsp;ws2812_set_all(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>);<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Funciones helper para uso fácil
+                </div>
+            </div>
+            
+            <!-- Tarjeta 7 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #d35400;">
+                    <h2>Ejemplo de Uso</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #d35400;">Programa Principal</h3>
+                    
+                    <div class="code-block">
+                        <span class="keyword">int</span> <span class="function">main</span>(<span class="keyword">void</span>) {<br>
+                        &nbsp;&nbsp;ws2812_init();<br>
+                        &nbsp;&nbsp;ws2812_clear();<br>
+                        &nbsp;&nbsp;ws2812_update();<br><br>
+                        
+                        &nbsp;&nbsp;<span class="keyword">while</span> (<span class="number">1</span>) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Efecto de carrera roja</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">for</span> (<span class="keyword">uint8_t</span> i = <span class="number">0</span>; i < NUM_LEDS; i++) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ws2812_clear();<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ws2812_set_color(i, <span class="number">255</span>, <span class="number">0</span>, <span class="number">0</span>);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ws2812_update();<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_delay_ms(<span class="number">100</span>);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;}<br>
+                        }
+                    </div>
+                    
+                    <h3 style="border-color: #d35400;">Compilación</h3>
+                    <div class="code-block">
+                        avr-gcc -mmcu=atmega328p -Os -Wall <span class="comment">\</span><br>
+                        &nbsp;&nbsp;-fpack-struct -fshort-enums -std=gnu99 <span class="comment">\</span><br>
+                        &nbsp;&nbsp;-o ws2812.elf ws2812.c
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Programa completo funcional
+                </div>
+            </div>
+            
+            <!-- Tarjeta 8 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #34495e;">
+                    <h2>Consideraciones de Alimentación</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #34495e;">Consumo de Energía</h3>
+                    <ul>
+                        <li style="color: #34495e;">5V DC requeridos</li>
+                        <li style="color: #34495e;">~60mA por LED en blanco máximo</li>
+                        <li style="color: #34495e;">16 LEDs: ~1A máximo</li>
+                        <li style="color: #34495e;">Usar fuente adecuada</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #34495e;">Consejos de Conexión</h3>
+                    <ul>
+                        <li style="color: #34495e;">Condensador 1000μF cerca de la tira</li>
+                        <li style="color: #34495e;">Resistor 330-470Ω en línea de datos</li>
+                        <li style="color: #34495e;">Cables gruesos para alimentación</li>
+                        <li style="color: #34495e;">GND común entre AVR y LEDs</li>
+                    </ul>
+                </div>
+                <div class="presentation-footer">
+                    La alimentación estable es crítica
+                </div>
+            </div>
+            
+            <!-- Tarjeta 9 -->
+            <div class="presentation">
+                <div class="presentation-header" style="background: #27ae60;">
+                    <h2>Optimizaciones Avanzadas</h2>
+                </div>
+                <div class="presentation-content">
+                    <h3 style="border-color: #27ae60;">Técnicas de Optimización</h3>
+                    <ul>
+                        <li style="color: #27ae60;">Usar registros directamente</li>
+                        <li style="color: #27ae60;">Buffer precalculado para efectos</li>
+                        <li style="color: #27ae60;">Look-up tables para colores</li>
+                        <li style="color: #27ae60;">DMA en microcontroladores avanzados</li>
+                    </ul>
+                    
+                    <h3 style="border-color: #27ae60;">Ejemplo Optimizado</h3>
+                    <div class="code-block">
+                        <span class="comment">// Enviar buffer completo sin interrupciones</span><br>
+                        <span class="keyword">void</span> <span class="function">ws2812_send_buffer</span>(<span class="keyword">uint8_t</span> *buffer, <span class="keyword">uint16_t</span> length) {<br>
+                        &nbsp;&nbsp;<span class="keyword">uint8_t</span> sreg = SREG;<br>
+                        &nbsp;&nbsp;cli();<br>
+                        &nbsp;&nbsp;<span class="keyword">while</span> (length--) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;ws2812_send_byte(*buffer++);<br>
+                        &nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;_delay_us(<span class="number">60</span>);<br>
+                        &nbsp;&nbsp;SREG = sreg;<br>
+                        }
+                    </div>
+                </div>
+                <div class="presentation-footer">
+                    Máximo rendimiento para efectos complejos
+                </div>
+            </div>
+        </div>
+        
+        <div class="protocol-timing">
+            <h2>Diagrama de Temporización y Código Assembly</h2>
+            
+            <div class="timing-diagram">
+                <p>Frecuencia CPU: 16MHz (62.5ns por ciclo)</p>
+                <p>Bit '0': <span class="signal-high">HIGH</span> 6 ciclos (375ns) | <span class="signal-low">LOW</span> 10 ciclos (625ns)</p>
+                <p>Bit '1': <span class="signal-high">HIGH</span> 13 ciclos (812ns) | <span class="signal-low">LOW</span> 7 ciclos (437ns)</p>
+                <p>Reset: <span class="signal-low">LOW</span> >800 ciclos (>50μs)</p>
+            </div>
+            
+            <h3>Código Assembly Completo</h3>
+            <div class="assembly-code">
+                <span class="assembly-comment">; Función para enviar un byte a WS2812</span><br>
+                <span class="assembly-comment">; Entrada: r24 = byte a enviar</span><br>
+                <span class="assembly-comment">; Usa: r24, r25</span><br>
+                .global ws2812_send_byte<br>
+                ws2812_send_byte:<br>
+                &nbsp;&nbsp;<span class="assembly-instruction">ldi</span> r25, 8        <span class="assembly-comment">; 8 bits</span><br>
+                send_bit_loop:<br>
+                &nbsp;&nbsp;<span class="assembly-instruction">sbi</span> PORTB, 0      <span class="assembly-comment">; 2c - HIGH</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">lsl</span> r24           <span class="assembly-comment">; 1c - MSB to carry</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">brcs</span> send_one     <span class="assembly-comment">; 1/2c - Branch if 1</span><br>
+                <span class="assembly-comment">; Send '0' bit (6 cycles HIGH)</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span>               <span class="assembly-comment">; 1c</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">cbi</span> PORTB, 0      <span class="assembly-comment">; 2c - LOW</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span>               <span class="assembly-comment">; 1c</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span>               <span class="assembly-comment">; 1c</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">rjmp</span> next_bit    <span class="assembly-comment">; 2c</span><br>
+                send_one:<br>
+                <span class="assembly-comment">; Send '1' bit (13 cycles HIGH)</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">cbi</span> PORTB, 0      <span class="assembly-comment">; LOW</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">nop</span>               <span class="assembly-comment">; 1c</span><br>
+                next_bit:<br>
+                &nbsp;&nbsp;<span class="assembly-instruction">dec</span> r25           <span class="assembly-comment">; 1c</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">brne</span> send_bit_loop <span class="assembly-comment">; 2c (1c si última)</span><br>
+                &nbsp;&nbsp;<span class="assembly-instruction">ret</span>               <span class="assembly-comment">; 4c - return</span>
+            </div>
+        </div>
+        
+        <div class="led-demo">
+            <h2>Simulador de Control de LEDs WS2812</h2>
+            
+            <div class="led-controls">
+                <div class="control-section">
+                    <h3>Color Principal</h3>
+                    <input type="color" id="main-color" class="color-picker" value="#ff0000">
+                    <div class="slider-container">
+                        <label>Brillo: <span id="brightness-value">100</span>%</label>
+                        <input type="range" id="brightness" class="slider" min="0" max="100" value="100">
+                    </div>
+                    <button class="btn" onclick="applyToAll()">Aplicar a Todos</button>
+                </div>
+                
+                <div class="control-section">
+                    <h3>LED Individual</h3>
+                    <div class="slider-container">
+                        <label>LED: <span id="led-number">1</span></label>
+                        <input type="range" id="select-led" class="slider" min="1" max="16" value="1">
+                    </div>
+                    <input type="color" id="individual-color" class="color-picker" value="#00ff00">
+                    <button class="btn" onclick="applyToLED()">Aplicar a LED</button>
+                </div>
+                
+                <div class="control-section">
+                    <h3>Efectos AVR</h3>
+                    <select id="effect-select" class="config-input">
+                        <option value="none">Sin efecto</option>
+                        <option value="chase">Carrera (asm)</option>
+                        <option value="rainbow">Arcoíris</option>
+                        <option value="breath">Respiración</option>
+                    </select>
+                    <button class="btn" onclick="startEffect()">Iniciar Efecto</button>
+                    <button class="btn" onclick="clearLEDs()" style="background: #e74c3c;">Apagar Todo</button>
+                </div>
+            </div>
+            
+            <div class="led-strip" id="led-strip">
+                <!-- Los LEDs se generan con JavaScript -->
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <div class="data-stream" id="data-stream">
+                    Buffer AVR: Esperando configuración...
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="../Codigos/C/WS2812.c" class="btn" download>
+                <i class="fas fa-download"></i> Descargar Ejemplos de Código
+            </a>
+            <a href="javascript:history.back()" class="btn" style="background: #7f8c8d;">
+                <i class="fas fa-arrow-left"></i> Volver Atrás
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simulador de LEDs WS2812 con AVR-GCC
+        const numLEDs = 16;
+        const leds = [];
+        let ledBuffer = new Array(numLEDs * 3).fill(0); // Buffer GRB
+        
+        // Inicializar la tira de LEDs
+        function initializeLEDs() {
+            const ledStrip = document.getElementById('led-strip');
+            ledStrip.innerHTML = '';
+            
+            for (let i = 0; i < numLEDs; i++) {
+                const led = document.createElement('div');
+                led.className = 'led';
+                led.id = `led-${i}`;
+                led.dataset.index = i;
+                led.dataset.color = '#000000';
+                ledStrip.appendChild(led);
+                leds.push(led);
+            }
+        }
+        
+        // Aplicar color a todos los LEDs
+        function applyToAll() {
+            const color = document.getElementById('main-color').value;
+            const brightness = parseInt(document.getElementById('brightness').value) / 100;
+            
+            const adjustedColor = adjustBrightness(color, brightness);
+            const rgb = hexToRgb(adjustedColor);
+            
+            // Actualizar buffer AVR (formato GRB)
+            for (let i = 0; i < numLEDs; i++) {
+                const baseIndex = i * 3;
+                ledBuffer[baseIndex] = rgb.g;     // Green
+                ledBuffer[baseIndex + 1] = rgb.r; // Red
+                ledBuffer[baseIndex + 2] = rgb.b; // Blue
+                
+                leds[i].style.background = adjustedColor;
+                leds[i].dataset.color = adjustedColor;
+            }
+            
+            updateDataStream();
+        }
+        
+        // Aplicar color a un LED específico
+        function applyToLED() {
+            const ledIndex = parseInt(document.getElementById('select-led').value) - 1;
+            const color = document.getElementById('individual-color').value;
+            const brightness = parseInt(document.getElementById('brightness').value) / 100;
+            
+            const adjustedColor = adjustBrightness(color, brightness);
+            const rgb = hexToRgb(adjustedColor);
+            
+            // Actualizar buffer AVR para LED específico
+            const baseIndex = ledIndex * 3;
+            ledBuffer[baseIndex] = rgb.g;     // Green
+            ledBuffer[baseIndex + 1] = rgb.r; // Red
+            ledBuffer[baseIndex + 2] = rgb.b; // Blue
+            
+            leds[ledIndex].style.background = adjustedColor;
+            leds[ledIndex].dataset.color = adjustedColor;
+            
+            updateDataStream();
+        }
+        
+        // Convertir hex a RGB
+        function hexToRgb(hex) {
+            const r = parseInt(hex.substr(1, 2), 16);
+            const g = parseInt(hex.substr(3, 2), 16);
+            const b = parseInt(hex.substr(5, 2), 16);
+            return { r, g, b };
+        }
+        
+        // Ajustar brillo de un color
+        function adjustBrightness(color, brightness) {
+            const rgb = hexToRgb(color);
+            
+            const adjustedR = Math.round(rgb.r * brightness);
+            const adjustedG = Math.round(rgb.g * brightness);
+            const adjustedB = Math.round(rgb.b * brightness);
+            
+            return `#${adjustedR.toString(16).padStart(2, '0')}${adjustedG.toString(16).padStart(2, '0')}${adjustedB.toString(16).padStart(2, '0')}`;
+        }
+        
+        // Actualizar el stream de datos mostrado
+        function updateDataStream() {
+            const dataStream = document.getElementById('data-stream');
+            let data = 'Buffer AVR-GCC: [';
+            
+            for (let i = 0; i < numLEDs; i++) {
+                const baseIndex = i * 3;
+                const g = ledBuffer[baseIndex].toString(16).padStart(2, '0').toUpperCase();
+                const r = ledBuffer[baseIndex + 1].toString(16).padStart(2, '0').toUpperCase();
+                const b = ledBuffer[baseIndex + 2].toString(16).padStart(2, '0').toUpperCase();
+                
+                data += `G${g}R${r}B${b}`;
+                if (i < numLEDs - 1) data += ', ';
+            }
+            
+            data += ']';
+            dataStream.textContent = data;
+        }
+        
+        // Efectos predefinidos
+        function startEffect() {
+            const effect = document.getElementById('effect-select').value;
+            
+            // Limpiar cualquier efecto anterior
+            clearInterval(window.effectInterval);
+            
+            if (effect === 'chase') {
+                let position = 0;
+                window.effectInterval = setInterval(() => {
+                    // Limpiar buffer - equivalente a ws2812_clear()
+                    ledBuffer.fill(0);
+                    
+                    // Encender LED actual en rojo
+                    const baseIndex = position * 3;
+                    ledBuffer[baseIndex] = 0;     // Green
+                    ledBuffer[baseIndex + 1] = 255; // Red
+                    ledBuffer[baseIndex + 2] = 0; // Blue
+                    
+                    // Actualizar visualización
+                    leds.forEach((led, index) => {
+                        if (index === position) {
+                            led.style.background = '#ff0000';
+                            led.dataset.color = '#ff0000';
+                        } else {
+                            led.style.background = '#000000';
+                            led.dataset.color = '#000000';
+                        }
+                    });
+                    
+                    position = (position + 1) % numLEDs;
+                    updateDataStream();
+                }, 200);
+            } else if (effect === 'rainbow') {
+                let hue = 0;
+                window.effectInterval = setInterval(() => {
+                    for (let i = 0; i < numLEDs; i++) {
+                        const ledHue = (hue + (i * 360 / numLEDs)) % 360;
+                        const rgb = hslToRgb(ledHue / 360, 1, 0.5);
+                        const baseIndex = i * 3;
+                        
+                        ledBuffer[baseIndex] = rgb.g;     // Green
+                        ledBuffer[baseIndex + 1] = rgb.r; // Red
+                        ledBuffer[baseIndex + 2] = rgb.b; // Blue
+                        
+                        leds[i].style.background = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                        leds[i].dataset.color = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+                    }
+                    
+                    hue = (hue + 2) % 360;
+                    updateDataStream();
+                }, 50);
+            } else if (effect === 'breath') {
+                let brightness = 0;
+                let increasing = true;
+                window.effectInterval = setInterval(() => {
+                    const r = Math.round(255 * (brightness / 100));
+                    
+                    for (let i = 0; i < numLEDs; i++) {
+                        const baseIndex = i * 3;
+                        ledBuffer[baseIndex] = 0;     // Green
+                        ledBuffer[baseIndex + 1] = r; // Red
+                        ledBuffer[baseIndex + 2] = 0; // Blue
+                        
+                        leds[i].style.background = `rgb(${r}, 0, 0)`;
+                        leds[i].dataset.color = `rgb(${r}, 0, 0)`;
+                    }
+                    
+                    if (increasing) {
+                        brightness += 2;
+                        if (brightness >= 100) increasing = false;
+                    } else {
+                        brightness -= 2;
+                        if (brightness <= 0) increasing = true;
+                    }
+                    
+                    updateDataStream();
+                }, 50);
+            }
+        }
+        
+        // Convertir HSL a RGB
+        function hslToRgb(h, s, l) {
+            let r, g, b;
+            
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            
+            return {
+                r: Math.round(r * 255),
+                g: Math.round(g * 255),
+                b: Math.round(b * 255)
+            };
+        }
+        
+        // Apagar todos los LEDs
+        function clearLEDs() {
+            clearInterval(window.effectInterval);
+            ledBuffer.fill(0);
+            leds.forEach(led => {
+                led.style.background = '#000000';
+                led.dataset.color = '#000000';
+            });
+            updateDataStream();
+        }
+        
+        // Descargar código de ejemplo
+        function downloadCode() {
+            const code = `/*
+ * Control WS2812 con AVR-GCC
+ * ATmega328P @ 16MHz
+ */
+
+#define F_CPU 16000000UL
+#include <avr/io.h>
+#include <util/delay.h>
+
+// Configuración
+#define WS2812_PORT PORTB
+#define WS2812_DDR  DDRB
+#define WS2812_PIN  PB0
+#define NUM_LEDS    16
+
+// Buffer de LEDs (formato GRB)
+typedef struct {
+    uint8_t g;
+    uint8_t r;
+    uint8_t b;
+} ws2812_led_t;
+
+ws2812_led_t leds[NUM_LEDS];
+
+// Prototipos
+void ws2812_init(void);
+void ws2812_send_byte(uint8_t byte);
+void ws2812_update(void);
+void ws2812_set_color(uint8_t led, uint8_t r, uint8_t g, uint8_t b);
+void ws2812_set_all(uint8_t r, uint8_t g, uint8_t b);
+void ws2812_clear(void);
+
+int main(void) {
+    ws2812_init();
+    
+    while(1) {
+        // Ejemplo: efecto de carrera roja
+        for(uint8_t i=0; i<NUM_LEDS; i++) {
+            ws2812_clear();
+            ws2812_set_color(i, 255, 0, 0);
+            ws2812_update();
+            _delay_ms(100);
+        }
+    }
+}
+
+void ws2812_init(void) {
+    WS2812_DDR |= (1 << WS2812_PIN);
+}
+
+void ws2812_set_color(uint8_t led, uint8_t r, uint8_t g, uint8_t b) {
+    if(led < NUM_LEDS) {
+        leds[led].r = r;
+        leds[led].g = g;
+        leds[led].b = b;
+    }
+}
+
+void ws2812_set_all(uint8_t r, uint8_t g, uint8_t b) {
+    for(uint8_t i=0; i<NUM_LEDS; i++) {
+        ws2812_set_color(i, r, g, b);
+    }
+}
+
+void ws2812_clear(void) {
+    ws2812_set_all(0, 0, 0);
+}
+
+// Assembly inline para envío preciso
+void ws2812_send_byte(uint8_t byte) {
+    asm volatile (
+        "ldi r25, 8             \\n\\t"  // 8 bits
+        "send_bit:              \\n\\t"
+        "sbi %0, %1            \\n\\t"  // HIGH
+        "lsl %2                \\n\\t"  // MSB to carry
+        "brcs bit_1            \\n\\t"  // Branch if 1
+        // Bit 0 (6 ciclos HIGH)
+        "nop                   \\n\\t"
+        "cbi %0, %1            \\n\\t"  // LOW
+        "nop                   \\n\\t"
+        "nop                   \\n\\t"
+        "rjmp next_bit         \\n\\t"
+        "bit_1:                \\n\\t"  // Bit 1 (13 ciclos HIGH)
+        "nop                   \\n\\t"
+        "nop                   \\n\\t"
+        "nop                   \\n\\t"
+        "nop                   \\n\\t"
+        "nop                   \\n\\t"
+        "nop                   \\n\\t"
+        "nop                   \\n\\t"
+        "nop                   \\n\\t"
+        "nop                   \\n\\t"
+        "cbi %0, %1            \\n\\t"  // LOW
+        "nop                   \\n\\t"
+        "next_bit:             \\n\\t"
+        "dec r25               \\n\\t"
+        "brne send_bit         \\n\\t"
+        :
+        : "I" (_SFR_IO_ADDR(WS2812_PORT)), 
+          "I" (WS2812_PIN),
+          "r" (byte)
+        : "r25"
+    );
+}
+
+void ws2812_update(void) {
+    uint8_t sreg = SREG;
+    cli();
+    
+    for(uint8_t i=0; i<NUM_LEDS; i++) {
+        ws2812_send_byte(leds[i].g);
+        ws2812_send_byte(leds[i].r);
+        ws2812_send_byte(leds[i].b);
+    }
+    
+    _delay_us(60);
+    SREG = sreg;
+}`;
+
+            const blob = new Blob([code], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ws2812_avr.c';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Inicializar controles
+        document.getElementById('brightness').addEventListener('input', function() {
+            document.getElementById('brightness-value').textContent = this.value;
+        });
+        
+        document.getElementById('select-led').addEventListener('input', function() {
+            document.getElementById('led-number').textContent = this.value;
+        });
+        
+        // Inicializar la simulación
+        initializeLEDs();
+        updateDataStream();
+    </script>
+</body>
+</html>
